@@ -189,10 +189,10 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 4
 					);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
-					Channels[3] = SWAP32(Channels[3]);
+					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
+					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
+					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
+					*reinterpret_cast<uint32_t*>(&Channels[3]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[3]));
 					Callback.ColorCYMK(
 						EntryName,
 						Channels[0],
@@ -208,9 +208,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 3
 					);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
+					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
+					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
+					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
 					Callback.ColorRGB(
 						EntryName,
 						Channels[0],
@@ -225,9 +225,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 3
 					);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
+					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
+					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
+					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
 					Callback.ColorLAB(
 						EntryName,
 						Channels[0],
@@ -242,7 +242,7 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 1
 					);
-					Channels[0] = SWAP32(Channels[0]);
+					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
 					Callback.ColorGray(
 						EntryName,
 						Channels[0]
