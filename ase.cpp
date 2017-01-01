@@ -7,8 +7,6 @@
 
 namespace ase
 {
-const uint32_t Magic = 'ASEF';
-
 enum BlockClass : uint16_t
 {
 	ColorEntry = 0x0001,
@@ -64,6 +62,11 @@ bool LoadFromStream(
 	);
 
 	Magic = _byteswap_ulong(Magic);
+
+	if( Magic != 'ASEF' )
+	{
+		return false;
+	}
 
 	uint16_t Version[2];
 	uint32_t BlockCount;
