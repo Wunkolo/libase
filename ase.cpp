@@ -274,11 +274,38 @@ bool LoadFromStream(
 }
 
 template< typename T >
-inline const T& ReadType(const void* &Pointer)
+inline T ReadType(const void* &Pointer)
 {
 	const T *Temp = static_cast<const T*>(Pointer);
 	Pointer = static_cast<const T*>(Pointer) + static_cast<ptrdiff_t>(1);
 	return *Temp;
+}
+
+template<>
+inline uint32_t ReadType<uint32_t>(const void* &Pointer)
+{
+	const uint32_t *Temp = static_cast<const uint32_t*>(Pointer);
+	Pointer = static_cast<const uint32_t*>(Pointer) + static_cast<ptrdiff_t>(1);
+
+	return SWAP32(*Temp);
+}
+
+template<>
+inline uint16_t ReadType<uint16_t>(const void* &Pointer)
+{
+	const uint16_t *Temp = static_cast<const uint16_t*>(Pointer);
+	Pointer = static_cast<const uint16_t*>(Pointer) + static_cast<ptrdiff_t>(1);
+
+	return SWAP16(*Temp);
+}
+
+template<>
+inline float ReadType<float>(const void* &Pointer)
+{
+	const float *Temp = static_cast<const float*>(Pointer);
+	Pointer = static_cast<const float*>(Pointer) + static_cast<ptrdiff_t>(1);
+
+	return SWAP32(*reinterpret_cast<const uint32_t*>(Temp));
 }
 
 inline void Read(const void* &Pointer, void* Dest, size_t Count)
@@ -302,8 +329,6 @@ bool LoadFromMemory(
 
 	uint32_t Magic = ReadType<uint32_t>(ReadPoint);
 
-	Magic = SWAP32(Magic);
-
 	if( Magic != 'ASEF' )
 	{
 		return false;
@@ -316,17 +341,12 @@ bool LoadFromMemory(
 	Version[1] = ReadType<uint16_t>(ReadPoint);
 	BlockCount = ReadType<uint32_t>(ReadPoint);
 
-	Version[0] = SWAP16(Version[0]);
-	Version[1] = SWAP16(Version[1]);
-	BlockCount = SWAP32(BlockCount);
-
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
 	// Process stream
-	while( BlockCount-- && Size )
+	while( BlockCount-- )
 	{
 		CurBlockClass = ReadType<uint16_t>(ReadPoint);
-		CurBlockClass = SWAP16(CurBlockClass);
 
 		switch( CurBlockClass )
 		{
@@ -334,12 +354,10 @@ bool LoadFromMemory(
 		case BlockClass::GroupBegin:
 		{
 			CurBlockSize = ReadType<uint32_t>(ReadPoint);
-			CurBlockSize = SWAP32(CurBlockSize);
 
 			uint16_t EntryNameLength;
 
 			EntryNameLength = ReadType<uint16_t>(ReadPoint);
-			EntryNameLength = SWAP16(EntryNameLength);
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
@@ -362,7 +380,6 @@ bool LoadFromMemory(
 				uint32_t ColorModel;
 
 				ColorModel = ReadType<uint32_t>(ReadPoint);
-				ColorModel = SWAP32(ColorModel);
 
 				float Channels[4];
 
@@ -370,11 +387,10 @@ bool LoadFromMemory(
 				{
 				case ColorModel::CMYK:
 				{
-					Read(ReadPoint, Channels, sizeof(float) * 4);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
-					Channels[3] = SWAP32(Channels[3]);
+					Channels[0] = ReadType<float>(ReadPoint);
+					Channels[1] = ReadType<float>(ReadPoint);
+					Channels[2] = ReadType<float>(ReadPoint);
+					Channels[3] = ReadType<float>(ReadPoint);
 					Callback.ColorCYMK(
 						EntryName,
 						Channels[0],
@@ -386,10 +402,9 @@ bool LoadFromMemory(
 				}
 				case ColorModel::RGB:
 				{
-					Read(ReadPoint, Channels, sizeof(float) * 3);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
+					Channels[0] = ReadType<float>(ReadPoint);
+					Channels[1] = ReadType<float>(ReadPoint);
+					Channels[2] = ReadType<float>(ReadPoint);
 					Callback.ColorRGB(
 						EntryName,
 						Channels[0],
@@ -400,10 +415,9 @@ bool LoadFromMemory(
 				}
 				case ColorModel::LAB:
 				{
-					Read(ReadPoint, Channels, sizeof(float) * 3);
-					Channels[0] = SWAP32(Channels[0]);
-					Channels[1] = SWAP32(Channels[1]);
-					Channels[2] = SWAP32(Channels[2]);
+					Channels[0] = ReadType<float>(ReadPoint);
+					Channels[1] = ReadType<float>(ReadPoint);
+					Channels[2] = ReadType<float>(ReadPoint);
 					Callback.ColorLAB(
 						EntryName,
 						Channels[0],
@@ -414,8 +428,7 @@ bool LoadFromMemory(
 				}
 				case ColorModel::GRAY:
 				{
-					Read(ReadPoint, Channels, sizeof(float));
-					Channels[0] = SWAP32(Channels[0]);
+					Channels[0] = ReadType<float>(ReadPoint);
 					Callback.ColorGray(
 						EntryName,
 						Channels[0]
@@ -425,9 +438,7 @@ bool LoadFromMemory(
 				}
 
 				uint16_t ColorType;
-
 				ColorType = ReadType<uint16_t>(ReadPoint);
-				ColorType = SWAP16(ColorType);
 			}
 
 			break;
