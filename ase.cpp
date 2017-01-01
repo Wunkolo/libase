@@ -302,10 +302,9 @@ inline uint16_t ReadType<uint16_t>(const void* &Pointer)
 template<>
 inline float ReadType<float>(const void* &Pointer)
 {
-	const float *Temp = static_cast<const float*>(Pointer);
+	uint32_t Temp = SWAP32(*static_cast<const uint32_t*>(Pointer));
 	Pointer = static_cast<const float*>(Pointer) + static_cast<ptrdiff_t>(1);
-
-	return SWAP32(*reinterpret_cast<const uint32_t*>(Temp));
+	return *reinterpret_cast<float*>(&Temp);
 }
 
 inline void Read(const void* &Pointer, void* Dest, size_t Count)
