@@ -91,7 +91,7 @@ bool LoadFromStream(
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
 	// Process stream
-	while( CurBlockSize )
+	while( BlockCount-- )
 	{
 		Stream.read(
 			reinterpret_cast<char*>(&CurBlockClass),
@@ -235,12 +235,163 @@ bool LoadFromStream(
 	return true;
 }
 
+template< typename T >
+inline const T& ReadType(const void* &Pointer)
+{
+	const T *Temp = static_cast<const T*>(Pointer);
+	Pointer = static_cast<const T*>(Pointer) + static_cast<ptrdiff_t>(1);
+	return *Temp;
+}
+
+inline void Read(const void* &Pointer, void* Dest,size_t Count)
+{
+	Dest = memcpy(Dest, Pointer, Count);
+	Pointer = static_cast<const uint8_t*>(Pointer) + Count;
+}
+
 bool LoadFromMemory(
 	ColorCallback& Callback,
 	const void* Buffer,
 	size_t Size
 )
 {
-	return false;
+	if( Buffer == nullptr )
+	{
+		return false;
+	}
+
+	const void* ReadPoint = Buffer;
+
+	uint32_t Magic = ReadType<uint32_t>(ReadPoint);
+
+	Magic = _byteswap_ulong(Magic);
+
+	if( Magic != 'ASEF' )
+	{
+		return false;
+	}
+
+	uint16_t Version[2];
+	uint32_t BlockCount;
+
+	Version[0] = ReadType<uint16_t>(ReadPoint);
+	Version[1] = ReadType<uint16_t>(ReadPoint);
+	BlockCount = ReadType<uint32_t>(ReadPoint);
+
+	Version[0] = _byteswap_ushort(Version[0]);
+	Version[1] = _byteswap_ushort(Version[1]);
+	BlockCount = _byteswap_ulong(BlockCount);
+
+	uint16_t CurBlockClass;
+	uint32_t CurBlockSize;
+	// Process stream
+	while( BlockCount-- && Size)
+	{
+		CurBlockClass = ReadType<uint16_t>(ReadPoint);
+		CurBlockClass = _byteswap_ushort(CurBlockClass);
+
+		switch( CurBlockClass )
+		{
+		case BlockClass::ColorEntry:
+		case BlockClass::GroupBegin:
+		{
+			CurBlockSize = ReadType<uint32_t>(ReadPoint);
+			CurBlockSize = _byteswap_ulong(CurBlockSize);
+
+			uint16_t EntryNameLength;
+
+			EntryNameLength = ReadType<uint16_t>(ReadPoint);
+			EntryNameLength = _byteswap_ushort(EntryNameLength);
+
+			std::u16string EntryName;
+			EntryName.resize(EntryNameLength);
+			Read(ReadPoint, &EntryName[0], EntryNameLength * 2);
+
+			// Endian swap each character
+			for( size_t i = 0; i < EntryNameLength; i++ )
+			{
+				EntryName[i] = _byteswap_ushort(EntryName[i]);
+			}
+
+
+			if( CurBlockClass == BlockClass::GroupBegin )
+			{
+				Callback.GroupBegin(
+					EntryName
+				);
+			}
+			else if( CurBlockClass == BlockClass::ColorEntry )
+			{
+				uint32_t ColorModel;
+
+				ColorModel = ReadType<uint32_t>(ReadPoint);
+				ColorModel = _byteswap_ulong(ColorModel);
+
+				float Channels[4];
+
+				switch( ColorModel )
+				{
+				case ColorModel::CMYK:
+				{
+					Read(ReadPoint, Channels, sizeof(float) * 4);
+					Callback.ColorCYMK(
+						EntryName,
+						Channels[0],
+						Channels[1],
+						Channels[2],
+						Channels[3]
+					);
+					break;
+				}
+				case ColorModel::RGB:
+				{
+					Read(ReadPoint, Channels, sizeof(float) * 3);
+					Callback.ColorRGB(
+						EntryName,
+						Channels[0],
+						Channels[1],
+						Channels[2]
+					);
+					break;
+				}
+				case ColorModel::LAB:
+				{
+					Read(ReadPoint, Channels, sizeof(float) * 3);
+					Callback.ColorLAB(
+						EntryName,
+						Channels[0],
+						Channels[1],
+						Channels[2]
+					);
+					break;
+				}
+				case ColorModel::GRAY:
+				{
+					Read(ReadPoint, Channels, sizeof(float));
+					Callback.ColorGray(
+						EntryName,
+						Channels[0]
+					);
+					break;
+				}
+				}
+
+				uint16_t ColorType;
+
+				ColorType = ReadType<uint16_t>(ReadPoint);
+				ColorType = _byteswap_ushort(ColorType);
+			}
+
+			break;
+		}
+		case BlockClass::GroupEnd:
+		{
+			Callback.GroupEnd();
+			break;
+		}
+		}
+	}
+
+	return true;
 }
 }
