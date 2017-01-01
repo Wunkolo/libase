@@ -3,7 +3,37 @@
 #include <stdint.h>
 #include <fstream>
 
-#include <intrin.h>// Endian Swap
+#if defined(_MSC_VER)
+
+#include <intrin.h>
+#define SWAP32(x) _byteswap_ulong(x)
+#define SWAP16(x) _byteswap_ushort(x)
+
+#elif defined(__GNUC__) || defined(__clang__)
+
+#define SWAP32(x) __builtin_bswap32(x)
+#define SWAP16(x) __builtin_bswap16(x)
+#else
+
+inline uint16_t SWAP16(uint16_t x)
+{
+	return (
+		((x & 0x00FF) << 8) |
+		((x & 0xFF00) >> 8)
+		);
+}
+
+inline uint32_t SWAP32(uint32_t x)
+{
+	return(
+		((x & 0x000000FF) << 24) |
+		((x & 0x0000FF00) << 8) |
+		((x & 0x00FF0000) >> 8) |
+		((x & 0xFF000000) >> 24)
+		);
+}
+
+#endif
 
 namespace ase
 {
@@ -61,7 +91,7 @@ bool LoadFromStream(
 		sizeof(uint32_t)
 	);
 
-	Magic = _byteswap_ulong(Magic);
+	Magic = SWAP32(Magic);
 
 	if( Magic != 'ASEF' )
 	{
@@ -84,9 +114,9 @@ bool LoadFromStream(
 		sizeof(uint32_t)
 	);
 
-	Version[0] = _byteswap_ushort(Version[0]);
-	Version[1] = _byteswap_ushort(Version[1]);
-	BlockCount = _byteswap_ulong(BlockCount);
+	Version[0] = SWAP16(Version[0]);
+	Version[1] = SWAP16(Version[1]);
+	BlockCount = SWAP32(BlockCount);
 
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
@@ -97,7 +127,7 @@ bool LoadFromStream(
 			reinterpret_cast<char*>(&CurBlockClass),
 			sizeof(uint16_t)
 		);
-		CurBlockClass = _byteswap_ushort(CurBlockClass);
+		CurBlockClass = SWAP16(CurBlockClass);
 
 		switch( CurBlockClass )
 		{
@@ -108,7 +138,7 @@ bool LoadFromStream(
 				reinterpret_cast<char*>(&CurBlockSize),
 				sizeof(uint32_t)
 			);
-			CurBlockSize = _byteswap_ulong(CurBlockSize);
+			CurBlockSize = SWAP32(CurBlockSize);
 
 			std::u16string EntryName;
 			uint16_t EntryNameLength;
@@ -117,8 +147,7 @@ bool LoadFromStream(
 				reinterpret_cast<char*>(&EntryNameLength),
 				sizeof(uint16_t)
 			);
-			EntryNameLength = _byteswap_ushort(EntryNameLength);
-
+			EntryNameLength = SWAP16(EntryNameLength);
 
 			EntryName.clear();
 			EntryName.resize(EntryNameLength);
@@ -131,9 +160,8 @@ bool LoadFromStream(
 			// Endian swap each character
 			for( size_t i = 0; i < EntryNameLength; i++ )
 			{
-				EntryName[i] = _byteswap_ushort(EntryName[i]);
+				EntryName[i] = SWAP16(EntryName[i]);
 			}
-
 
 			if( CurBlockClass == BlockClass::GroupBegin )
 			{
@@ -149,7 +177,7 @@ bool LoadFromStream(
 					reinterpret_cast<char*>(&ColorModel),
 					sizeof(uint32_t)
 				);
-				ColorModel = _byteswap_ulong(ColorModel);
+				ColorModel = SWAP32(ColorModel);
 
 				float Channels[4];
 
@@ -161,14 +189,17 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 4
 					);
-
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
+					Channels[3] = SWAP32(Channels[3]);
 					Callback.ColorCYMK(
 						EntryName,
 						Channels[0],
 						Channels[1],
 						Channels[2],
 						Channels[3]
-						);
+					);
 					break;
 				}
 				case ColorModel::RGB:
@@ -177,6 +208,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 3
 					);
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
 					Callback.ColorRGB(
 						EntryName,
 						Channels[0],
@@ -191,6 +225,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 3
 					);
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
 					Callback.ColorLAB(
 						EntryName,
 						Channels[0],
@@ -205,6 +242,7 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(Channels),
 						sizeof(float) * 1
 					);
+					Channels[0] = SWAP32(Channels[0]);
 					Callback.ColorGray(
 						EntryName,
 						Channels[0]
@@ -219,7 +257,7 @@ bool LoadFromStream(
 					reinterpret_cast<char*>(&ColorType),
 					sizeof(uint16_t)
 				);
-				ColorType = _byteswap_ushort(ColorType);
+				ColorType = SWAP16(ColorType);
 			}
 
 			break;
@@ -243,7 +281,7 @@ inline const T& ReadType(const void* &Pointer)
 	return *Temp;
 }
 
-inline void Read(const void* &Pointer, void* Dest,size_t Count)
+inline void Read(const void* &Pointer, void* Dest, size_t Count)
 {
 	Dest = memcpy(Dest, Pointer, Count);
 	Pointer = static_cast<const uint8_t*>(Pointer) + Count;
@@ -264,7 +302,7 @@ bool LoadFromMemory(
 
 	uint32_t Magic = ReadType<uint32_t>(ReadPoint);
 
-	Magic = _byteswap_ulong(Magic);
+	Magic = SWAP32(Magic);
 
 	if( Magic != 'ASEF' )
 	{
@@ -278,17 +316,17 @@ bool LoadFromMemory(
 	Version[1] = ReadType<uint16_t>(ReadPoint);
 	BlockCount = ReadType<uint32_t>(ReadPoint);
 
-	Version[0] = _byteswap_ushort(Version[0]);
-	Version[1] = _byteswap_ushort(Version[1]);
-	BlockCount = _byteswap_ulong(BlockCount);
+	Version[0] = SWAP16(Version[0]);
+	Version[1] = SWAP16(Version[1]);
+	BlockCount = SWAP32(BlockCount);
 
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
 	// Process stream
-	while( BlockCount-- && Size)
+	while( BlockCount-- && Size )
 	{
 		CurBlockClass = ReadType<uint16_t>(ReadPoint);
-		CurBlockClass = _byteswap_ushort(CurBlockClass);
+		CurBlockClass = SWAP16(CurBlockClass);
 
 		switch( CurBlockClass )
 		{
@@ -296,12 +334,12 @@ bool LoadFromMemory(
 		case BlockClass::GroupBegin:
 		{
 			CurBlockSize = ReadType<uint32_t>(ReadPoint);
-			CurBlockSize = _byteswap_ulong(CurBlockSize);
+			CurBlockSize = SWAP32(CurBlockSize);
 
 			uint16_t EntryNameLength;
 
 			EntryNameLength = ReadType<uint16_t>(ReadPoint);
-			EntryNameLength = _byteswap_ushort(EntryNameLength);
+			EntryNameLength = SWAP16(EntryNameLength);
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
@@ -310,9 +348,8 @@ bool LoadFromMemory(
 			// Endian swap each character
 			for( size_t i = 0; i < EntryNameLength; i++ )
 			{
-				EntryName[i] = _byteswap_ushort(EntryName[i]);
+				EntryName[i] = SWAP16(EntryName[i]);
 			}
-
 
 			if( CurBlockClass == BlockClass::GroupBegin )
 			{
@@ -325,7 +362,7 @@ bool LoadFromMemory(
 				uint32_t ColorModel;
 
 				ColorModel = ReadType<uint32_t>(ReadPoint);
-				ColorModel = _byteswap_ulong(ColorModel);
+				ColorModel = SWAP32(ColorModel);
 
 				float Channels[4];
 
@@ -334,6 +371,10 @@ bool LoadFromMemory(
 				case ColorModel::CMYK:
 				{
 					Read(ReadPoint, Channels, sizeof(float) * 4);
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
+					Channels[3] = SWAP32(Channels[3]);
 					Callback.ColorCYMK(
 						EntryName,
 						Channels[0],
@@ -346,6 +387,9 @@ bool LoadFromMemory(
 				case ColorModel::RGB:
 				{
 					Read(ReadPoint, Channels, sizeof(float) * 3);
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
 					Callback.ColorRGB(
 						EntryName,
 						Channels[0],
@@ -357,6 +401,9 @@ bool LoadFromMemory(
 				case ColorModel::LAB:
 				{
 					Read(ReadPoint, Channels, sizeof(float) * 3);
+					Channels[0] = SWAP32(Channels[0]);
+					Channels[1] = SWAP32(Channels[1]);
+					Channels[2] = SWAP32(Channels[2]);
 					Callback.ColorLAB(
 						EntryName,
 						Channels[0],
@@ -368,6 +415,7 @@ bool LoadFromMemory(
 				case ColorModel::GRAY:
 				{
 					Read(ReadPoint, Channels, sizeof(float));
+					Channels[0] = SWAP32(Channels[0]);
 					Callback.ColorGray(
 						EntryName,
 						Channels[0]
@@ -379,7 +427,7 @@ bool LoadFromMemory(
 				uint16_t ColorType;
 
 				ColorType = ReadType<uint16_t>(ReadPoint);
-				ColorType = _byteswap_ushort(ColorType);
+				ColorType = SWAP16(ColorType);
 			}
 
 			break;
