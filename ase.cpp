@@ -360,12 +360,11 @@ bool LoadFromMemory(
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
-			Read(ReadPoint, &EntryName[0], EntryNameLength * 2);
 
 			// Endian swap each character
 			for( size_t i = 0; i < EntryNameLength; i++ )
 			{
-				EntryName[i] = SWAP16(EntryName[i]);
+				EntryName[i] = ReadType<uint16_t>(ReadPoint);
 			}
 
 			if( CurBlockClass == BlockClass::GroupBegin )
