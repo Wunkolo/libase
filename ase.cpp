@@ -9,13 +9,6 @@ namespace ase
 {
 const uint32_t Magic = 'ASEF';
 
-struct Header
-{
-	uint32_t Magic; // ASEF
-	uint16_t Version[2]; // Major.Minor
-	uint32_t BlockCount;
-};
-
 enum BlockClass : uint16_t
 {
 	ColorEntry = 0x0001,
@@ -37,17 +30,6 @@ enum ColorType : uint16_t
 	Global = 0,
 	Spot = 1,
 	Normal = 2
-};
-
-struct Block
-{
-	uint16_t Type;
-	uint32_t Size;
-	uint16_t GroupNameLength;
-	std::u16string GroupName;
-	uint32_t ColorModel;
-	//std::vector<float> ColorValues;
-	uint16_t ColorType;
 };
 
 bool LoadFromFile(
