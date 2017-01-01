@@ -5,7 +5,6 @@
 
 namespace ase
 {
-
 class ColorCallback
 {
 public:
@@ -37,7 +36,7 @@ public:
 
 	virtual void ColorLAB(
 		const std::u16string &Name,
-		float Lighness,
+		float Lightness,
 		float A,
 		float B
 	)
@@ -63,12 +62,11 @@ bool LoadFromFile(
 bool LoadFromStream(
 	ColorCallback& Callback,
 	std::istream &Stream
-	);
+);
 
 bool LoadFromMemory(
 	ColorCallback& Callback,
 	const void* Buffer,
 	size_t Size
 );
-
 }
