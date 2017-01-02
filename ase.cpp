@@ -121,7 +121,7 @@ bool LoadFromStream(
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
 	// Process stream
-	while( BlockCount-- )
+	while( BlockCount-- && Stream )
 	{
 		Stream.read(
 			reinterpret_cast<char*>(&CurBlockClass),
