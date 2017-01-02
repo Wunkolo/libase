@@ -267,6 +267,12 @@ bool LoadFromStream(
 			Callback.GroupEnd();
 			break;
 		}
+		default:
+		{
+			// Unknown Block class
+			return false;
+			break;
+		}
 		}
 	}
 
@@ -444,6 +450,12 @@ bool LoadFromMemory(
 		case BlockClass::GroupEnd:
 		{
 			Callback.GroupEnd();
+			break;
+		}
+		default:
+		{
+			// Unknown Block class
+			return false;
 			break;
 		}
 		}
