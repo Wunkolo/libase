@@ -121,7 +121,7 @@ bool LoadFromStream(
 	uint16_t CurBlockClass;
 	uint32_t CurBlockSize;
 	// Process stream
-	while( BlockCount-- && Stream )
+	while( BlockCount-- )
 	{
 		Stream.read(
 			reinterpret_cast<char*>(&CurBlockClass),
@@ -265,12 +265,6 @@ bool LoadFromStream(
 		case BlockClass::GroupEnd:
 		{
 			Callback.GroupEnd();
-			break;
-		}
-		default:
-		{
-			// Unknown Block class
-			return false;
 			break;
 		}
 		}
@@ -450,12 +444,6 @@ bool LoadFromMemory(
 		case BlockClass::GroupEnd:
 		{
 			Callback.GroupEnd();
-			break;
-		}
-		default:
-		{
-			// Unknown Block class
-			return false;
 			break;
 		}
 		}
