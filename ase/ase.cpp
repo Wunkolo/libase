@@ -235,7 +235,7 @@ bool LoadFromStream(
 					ColorType::Gray CurColor;
 					Stream.read(
 						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::CMYK)
+						sizeof(ColorType::Gray)
 					);
 					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
 					Callback.ColorGray(
