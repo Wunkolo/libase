@@ -183,10 +183,10 @@ bool LoadFromStream(
 				{
 				case ColorModel::CMYK:
 				{
-					ColorType::CYMK CurColor;
+					ColorType::CMYK CurColor;
 					Stream.read(
 						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::CYMK)
+						sizeof(ColorType::CMYK)
 					);
 					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
 					*reinterpret_cast<uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[1]));
@@ -235,7 +235,7 @@ bool LoadFromStream(
 					ColorType::Gray CurColor;
 					Stream.read(
 						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::CYMK)
+						sizeof(ColorType::CMYK)
 					);
 					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
 					Callback.ColorGray(
@@ -378,7 +378,7 @@ bool LoadFromMemory(
 				{
 				case ColorModel::CMYK:
 				{
-					ColorType::CYMK CurColor;
+					ColorType::CMYK CurColor;
 					CurColor[0] = ReadType<float>(ReadPoint);
 					CurColor[1] = ReadType<float>(ReadPoint);
 					CurColor[2] = ReadType<float>(ReadPoint);

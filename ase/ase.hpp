@@ -21,7 +21,7 @@ struct Colorf32
 using Gray = Colorf32<1>;
 using RGB = Colorf32<3>;
 using LAB = Colorf32<3>;
-using CYMK = Colorf32<3>;
+using CMYK = Colorf32<4>;
 }
 
 class ColorCallback
@@ -60,7 +60,7 @@ public:
 
 	virtual void ColorCYMK(
 		const std::u16string &Name,
-		ColorType::CYMK Color
+		ColorType::CMYK Color
 	)
 	{
 	};
