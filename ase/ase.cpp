@@ -53,7 +53,7 @@ enum ColorModel : uint32_t
 	GRAY = 'Gray'
 };
 
-enum ColorType : uint16_t
+enum ColorCategory : uint16_t
 {
 	Global = 0,
 	Spot = 1,
@@ -179,85 +179,80 @@ bool LoadFromStream(
 				);
 				ColorModel = SWAP32(ColorModel);
 
-				float Channels[4];
-
 				switch( ColorModel )
 				{
 				case ColorModel::CMYK:
 				{
+					ColorType::CYMK CurColor;
 					Stream.read(
-						reinterpret_cast<char*>(Channels),
-						sizeof(float) * 4
+						reinterpret_cast<char*>(&CurColor),
+						sizeof(ColorType::CYMK)
 					);
-					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
-					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
-					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
-					*reinterpret_cast<uint32_t*>(&Channels[3]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[3]));
+					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
+					*reinterpret_cast<uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[1]));
+					*reinterpret_cast<uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[2]));
+					*reinterpret_cast<uint32_t*>(&CurColor[3]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[3]));
 					Callback.ColorCYMK(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2],
-						Channels[3]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::RGB:
 				{
+					ColorType::RGB CurColor;
 					Stream.read(
-						reinterpret_cast<char*>(Channels),
-						sizeof(float) * 3
+						reinterpret_cast<char*>(&CurColor),
+						sizeof(ColorType::RGB)
 					);
-					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
-					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
-					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
+					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
+					*reinterpret_cast<uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[1]));
+					*reinterpret_cast<uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[2]));
 					Callback.ColorRGB(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::LAB:
 				{
+					ColorType::LAB CurColor;
 					Stream.read(
-						reinterpret_cast<char*>(Channels),
-						sizeof(float) * 3
+						reinterpret_cast<char*>(&CurColor),
+						sizeof(ColorType::LAB)
 					);
-					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
-					*reinterpret_cast<uint32_t*>(&Channels[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[1]));
-					*reinterpret_cast<uint32_t*>(&Channels[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[2]));
+					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
+					*reinterpret_cast<uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[1]));
+					*reinterpret_cast<uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[2]));
 					Callback.ColorLAB(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::GRAY:
 				{
+					ColorType::Gray CurColor;
 					Stream.read(
-						reinterpret_cast<char*>(Channels),
-						sizeof(float) * 1
+						reinterpret_cast<char*>(&CurColor),
+						sizeof(ColorType::CYMK)
 					);
-					*reinterpret_cast<uint32_t*>(&Channels[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&Channels[0]));
+					*reinterpret_cast<uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[0]));
 					Callback.ColorGray(
 						EntryName,
-						Channels[0]
+						CurColor
 					);
 					break;
 				}
 				}
 
-				uint16_t ColorType;
+				uint16_t ColorCategory;
 
 				Stream.read(
-					reinterpret_cast<char*>(&ColorType),
+					reinterpret_cast<char*>(&ColorCategory),
 					sizeof(uint16_t)
 				);
-				ColorType = SWAP16(ColorType);
+				ColorCategory = SWAP16(ColorCategory);
 			}
 
 			break;
@@ -379,64 +374,59 @@ bool LoadFromMemory(
 
 				ColorModel = ReadType<uint32_t>(ReadPoint);
 
-				float Channels[4];
-
 				switch( ColorModel )
 				{
 				case ColorModel::CMYK:
 				{
-					Channels[0] = ReadType<float>(ReadPoint);
-					Channels[1] = ReadType<float>(ReadPoint);
-					Channels[2] = ReadType<float>(ReadPoint);
-					Channels[3] = ReadType<float>(ReadPoint);
+					ColorType::CYMK CurColor;
+					CurColor[0] = ReadType<float>(ReadPoint);
+					CurColor[1] = ReadType<float>(ReadPoint);
+					CurColor[2] = ReadType<float>(ReadPoint);
+					CurColor[3] = ReadType<float>(ReadPoint);
 					Callback.ColorCYMK(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2],
-						Channels[3]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::RGB:
 				{
-					Channels[0] = ReadType<float>(ReadPoint);
-					Channels[1] = ReadType<float>(ReadPoint);
-					Channels[2] = ReadType<float>(ReadPoint);
+					ColorType::RGB CurColor;
+					CurColor[0] = ReadType<float>(ReadPoint);
+					CurColor[1] = ReadType<float>(ReadPoint);
+					CurColor[2] = ReadType<float>(ReadPoint);
 					Callback.ColorRGB(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::LAB:
 				{
-					Channels[0] = ReadType<float>(ReadPoint);
-					Channels[1] = ReadType<float>(ReadPoint);
-					Channels[2] = ReadType<float>(ReadPoint);
+					ColorType::LAB CurColor;
+					CurColor[0] = ReadType<float>(ReadPoint);
+					CurColor[1] = ReadType<float>(ReadPoint);
+					CurColor[2] = ReadType<float>(ReadPoint);
 					Callback.ColorLAB(
 						EntryName,
-						Channels[0],
-						Channels[1],
-						Channels[2]
+						CurColor
 					);
 					break;
 				}
 				case ColorModel::GRAY:
 				{
-					Channels[0] = ReadType<float>(ReadPoint);
+					ColorType::Gray CurColor;
+					CurColor[0] = ReadType<float>(ReadPoint);
 					Callback.ColorGray(
 						EntryName,
-						Channels[0]
+						CurColor
 					);
 					break;
 				}
 				}
 
-				uint16_t ColorType;
-				ColorType = ReadType<uint16_t>(ReadPoint);
+				uint16_t ColorCategory;
+				ColorCategory = ReadType<uint16_t>(ReadPoint);
 			}
 
 			break;

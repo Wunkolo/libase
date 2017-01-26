@@ -1,9 +1,29 @@
 #pragma once
 #include <stddef.h>
 #include <string>
+#include <vector>
 
 namespace ase
 {
+namespace ColorType
+{
+template< size_t Channels >
+struct Colorf32
+{
+	float Channel[Channels];
+
+	float& operator[](size_t Index)
+	{
+		return Channel[Index];
+	}
+};
+
+using Gray = Colorf32<1>;
+using RGB = Colorf32<3>;
+using LAB = Colorf32<3>;
+using CYMK = Colorf32<3>;
+}
+
 class ColorCallback
 {
 public:
@@ -19,35 +39,28 @@ public:
 
 	virtual void ColorGray(
 		const std::u16string &Name,
-		float Lightness
+		ColorType::Gray Lightness
 	)
 	{
 	};
 
 	virtual void ColorRGB(
 		const std::u16string &Name,
-		float Red,
-		float Green,
-		float Blue
+		ColorType::RGB Color
 	)
 	{
 	};
 
 	virtual void ColorLAB(
 		const std::u16string &Name,
-		float Lightness,
-		float A,
-		float B
+		ColorType::LAB Color
 	)
 	{
 	};
 
 	virtual void ColorCYMK(
 		const std::u16string &Name,
-		float Cyan,
-		float Magenta,
-		float Yellow,
-		float Key
+		ColorType::CYMK Color
 	)
 	{
 	};
