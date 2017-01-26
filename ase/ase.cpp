@@ -192,7 +192,7 @@ bool LoadFromStream(
 					*reinterpret_cast<uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[1]));
 					*reinterpret_cast<uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[2]));
 					*reinterpret_cast<uint32_t*>(&CurColor[3]) = SWAP32(*reinterpret_cast<uint32_t*>(&CurColor[3]));
-					Callback.ColorCYMK(
+					Callback.ColorCMYK(
 						EntryName,
 						CurColor
 					);
@@ -383,7 +383,7 @@ bool LoadFromMemory(
 					CurColor[1] = ReadType<float>(ReadPoint);
 					CurColor[2] = ReadType<float>(ReadPoint);
 					CurColor[3] = ReadType<float>(ReadPoint);
-					Callback.ColorCYMK(
+					Callback.ColorCMYK(
 						EntryName,
 						CurColor
 					);

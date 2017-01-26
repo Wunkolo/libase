@@ -58,7 +58,7 @@ public:
 	{
 	};
 
-	virtual void ColorCYMK(
+	virtual void ColorCMYK(
 		const std::u16string &Name,
 		ColorType::CMYK Color
 	)
