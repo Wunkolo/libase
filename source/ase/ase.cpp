@@ -328,7 +328,7 @@ inline float ReadType<float>(const void* & Pointer)
 
 inline void Read(const void* & Pointer, void* Dest, std::size_t Count)
 {
-	Dest = memcpy(Dest, Pointer, Count);
+	memcpy(Dest, Pointer, Count);
 	Pointer = static_cast<const std::uint8_t*>(Pointer) + Count;
 }
 
@@ -345,7 +345,7 @@ bool LoadFromMemory(
 
 	const void* ReadPoint = Buffer;
 
-	std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
+	const std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
 
 	if( Magic != 'ASEF' )
 	{
@@ -353,29 +353,24 @@ bool LoadFromMemory(
 	}
 
 	std::uint16_t Version[2];
-	std::uint32_t BlockCount;
 
 	Version[0] = ReadType<std::uint16_t>(ReadPoint);
 	Version[1] = ReadType<std::uint16_t>(ReadPoint);
-	BlockCount = ReadType<std::uint32_t>(ReadPoint);
+	std::uint32_t BlockCount = ReadType<std::uint32_t>(ReadPoint);
 
-	std::uint16_t CurBlockClass;
-	std::uint32_t CurBlockSize;
 	// Process stream
 	while( BlockCount-- )
 	{
-		CurBlockClass = ReadType<std::uint16_t>(ReadPoint);
+		const std::uint16_t CurBlockClass = ReadType<std::uint16_t>(ReadPoint);
 
 		switch( CurBlockClass )
 		{
 		case BlockClass::ColorEntry:
 		case BlockClass::GroupBegin:
 		{
-			CurBlockSize = ReadType<std::uint32_t>(ReadPoint);
+			std::uint32_t CurBlockSize = ReadType<std::uint32_t>(ReadPoint);
 
-			std::uint16_t EntryNameLength;
-
-			EntryNameLength = ReadType<std::uint16_t>(ReadPoint);
+			const std::uint16_t EntryNameLength = ReadType<std::uint16_t>(ReadPoint);
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
@@ -394,9 +389,7 @@ bool LoadFromMemory(
 			}
 			else if( CurBlockClass == BlockClass::ColorEntry )
 			{
-				std::uint32_t ColorModel;
-
-				ColorModel = ReadType<std::uint32_t>(ReadPoint);
+				const std::uint32_t ColorModel = ReadType<std::uint32_t>(ReadPoint);
 
 				switch( ColorModel )
 				{
@@ -449,8 +442,7 @@ bool LoadFromMemory(
 				}
 				}
 
-				std::uint16_t ColorCategory;
-				ColorCategory = ReadType<std::uint16_t>(ReadPoint);
+				std::uint16_t ColorCategory = ReadType<std::uint16_t>(ReadPoint);
 			}
 
 			break;
