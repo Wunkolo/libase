@@ -7,12 +7,12 @@ namespace ase
 {
 namespace ColorType
 {
-template< size_t Channels >
+template< std::size_t Channels >
 struct Colorf32
 {
 	float Channel[Channels];
 
-	float& operator[](size_t Index)
+	float& operator[](std::size_t Index)
 	{
 		return Channel[Index];
 	}
@@ -79,6 +79,6 @@ bool LoadFromStream(
 bool LoadFromMemory(
 	ColorCallback& Callback,
 	const void* Buffer,
-	size_t Size
+	std::size_t Size
 );
 }
