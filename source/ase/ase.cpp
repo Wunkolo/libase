@@ -60,6 +60,30 @@ enum ColorCategory : std::uint16_t
 	Normal = 2
 };
 
+void IColorCallback::GroupBegin(const std::u16string& Name)
+{
+}
+
+void IColorCallback::GroupEnd()
+{
+}
+
+void IColorCallback::ColorGray(const std::u16string& Name, ColorType::Gray Lightness)
+{
+}
+
+void IColorCallback::ColorRGB(const std::u16string& Name, ColorType::RGB Color)
+{
+}
+
+void IColorCallback::ColorLAB(const std::u16string& Name, ColorType::LAB Color)
+{
+}
+
+void IColorCallback::ColorCMYK(const std::u16string& Name, ColorType::CMYK Color)
+{
+}
+
 bool LoadFromFile(
 	IColorCallback& Callback,
 	const char* FileName

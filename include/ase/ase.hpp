@@ -30,42 +30,30 @@ public:
 	virtual ~IColorCallback() = default;
 
 	virtual void GroupBegin(
-		const std::u16string &Name
-	)
-	{
-	}
+		const std::u16string& Name
+	);
 
-	virtual void GroupEnd()
-	{
-	}
+	virtual void GroupEnd();
 
 	virtual void ColorGray(
-		const std::u16string &Name,
+		const std::u16string& Name,
 		ColorType::Gray Lightness
-	)
-	{
-	};
+	);;
 
 	virtual void ColorRGB(
-		const std::u16string &Name,
+		const std::u16string& Name,
 		ColorType::RGB Color
-	)
-	{
-	};
+	);;
 
 	virtual void ColorLAB(
-		const std::u16string &Name,
+		const std::u16string& Name,
 		ColorType::LAB Color
-	)
-	{
-	};
+	);;
 
 	virtual void ColorCMYK(
-		const std::u16string &Name,
+		const std::u16string& Name,
 		ColorType::CMYK Color
-	)
-	{
-	};
+	);;
 };
 
 bool LoadFromFile(
@@ -75,7 +63,7 @@ bool LoadFromFile(
 
 bool LoadFromStream(
 	IColorCallback& Callback,
-	std::istream &Stream
+	std::istream& Stream
 );
 
 bool LoadFromMemory(
