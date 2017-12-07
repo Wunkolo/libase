@@ -27,6 +27,8 @@ using CMYK = Colorf32<4>;
 class ColorCallback
 {
 public:
+	virtual ~ColorCallback() = default;
+
 	virtual void GroupBegin(
 		const std::u16string &Name
 	)
