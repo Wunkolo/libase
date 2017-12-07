@@ -61,7 +61,7 @@ enum ColorCategory : std::uint16_t
 };
 
 bool LoadFromFile(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	const char* FileName
 )
 {
@@ -76,7 +76,7 @@ bool LoadFromFile(
 }
 
 bool LoadFromStream(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	std::istream& Stream
 )
 {
@@ -309,7 +309,7 @@ inline void Read(const void* & Pointer, void* Dest, std::size_t Count)
 }
 
 bool LoadFromMemory(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	const void* Buffer,
 	std::size_t Size
 )

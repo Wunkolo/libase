@@ -24,10 +24,10 @@ using LAB = Colorf32<3>;
 using CMYK = Colorf32<4>;
 }
 
-class ColorCallback
+class IColorCallback
 {
 public:
-	virtual ~ColorCallback() = default;
+	virtual ~IColorCallback() = default;
 
 	virtual void GroupBegin(
 		const std::u16string &Name
@@ -69,17 +69,17 @@ public:
 };
 
 bool LoadFromFile(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	const char* FileName
 );
 
 bool LoadFromStream(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	std::istream &Stream
 );
 
 bool LoadFromMemory(
-	ColorCallback& Callback,
+	IColorCallback& Callback,
 	const void* Buffer,
 	std::size_t Size
 );
