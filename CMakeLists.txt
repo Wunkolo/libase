@@ -43,6 +43,12 @@ set(
 ### Tests
 enable_testing()
 
+# Copy Sample swatch file to build folder
+file(
+	COPY test/SampleSwatch.ase
+	DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 add_executable(
 	Parse
 	test/Parse.cpp
@@ -55,5 +61,5 @@ target_link_libraries(
 
 add_test(
 	NAME Parse
-	COMMAND Parse
+	COMMAND Parse SampleSwatch.ase
 )
