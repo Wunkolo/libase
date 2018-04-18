@@ -226,10 +226,10 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::CMYK)
 					);
-					*reinterpret_cast<std::uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[0]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[1]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[2]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[3]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[3]));
+					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
+					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
+					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
+					CurColor.u32[3] = SWAP32(CurColor.u32[3]);
 					Callback.ColorCMYK(
 						EntryName,
 						CurColor
@@ -243,9 +243,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::RGB)
 					);
-					*reinterpret_cast<std::uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[0]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[1]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[2]));
+					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
+					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
+					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
 					Callback.ColorRGB(
 						EntryName,
 						CurColor
@@ -259,9 +259,9 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::LAB)
 					);
-					*reinterpret_cast<std::uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[0]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[1]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[1]));
-					*reinterpret_cast<std::uint32_t*>(&CurColor[2]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[2]));
+					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
+					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
+					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
 					Callback.ColorLAB(
 						EntryName,
 						CurColor
@@ -275,7 +275,7 @@ bool LoadFromStream(
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::Gray)
 					);
-					*reinterpret_cast<std::uint32_t*>(&CurColor[0]) = SWAP32(*reinterpret_cast<std::uint32_t*>(&CurColor[0]));
+					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
 					Callback.ColorGray(
 						EntryName,
 						CurColor
@@ -410,10 +410,10 @@ bool LoadFromMemory(
 				case ColorModel::CMYK:
 				{
 					ColorType::CMYK CurColor;
-					CurColor[0] = ReadType<float>(ReadPoint);
-					CurColor[1] = ReadType<float>(ReadPoint);
-					CurColor[2] = ReadType<float>(ReadPoint);
-					CurColor[3] = ReadType<float>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[3] = ReadType<std::float_t>(ReadPoint);
 					Callback.ColorCMYK(
 						EntryName,
 						CurColor
@@ -423,9 +423,9 @@ bool LoadFromMemory(
 				case ColorModel::RGB:
 				{
 					ColorType::RGB CurColor;
-					CurColor[0] = ReadType<float>(ReadPoint);
-					CurColor[1] = ReadType<float>(ReadPoint);
-					CurColor[2] = ReadType<float>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
 					Callback.ColorRGB(
 						EntryName,
 						CurColor
@@ -435,9 +435,9 @@ bool LoadFromMemory(
 				case ColorModel::LAB:
 				{
 					ColorType::LAB CurColor;
-					CurColor[0] = ReadType<float>(ReadPoint);
-					CurColor[1] = ReadType<float>(ReadPoint);
-					CurColor[2] = ReadType<float>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
 					Callback.ColorLAB(
 						EntryName,
 						CurColor
@@ -447,7 +447,7 @@ bool LoadFromMemory(
 				case ColorModel::GRAY:
 				{
 					ColorType::Gray CurColor;
-					CurColor[0] = ReadType<float>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
 					Callback.ColorGray(
 						EntryName,
 						CurColor

@@ -9,14 +9,10 @@ namespace ase
 namespace ColorType
 {
 template< std::size_t Channels >
-struct Colorf32
+union ColorTuple
 {
-	std::float_t Channel[Channels];
-
-	std::float_t& operator[](std::size_t Index)
-	{
-		return Channel[Index];
-	}
+	std::float_t f32[Channels];
+	std::uint32_t u32[Channels];
 
 	static_assert(
 		sizeof(std::float_t) == 4,
@@ -25,10 +21,10 @@ struct Colorf32
 	);
 };
 
-using Gray = Colorf32<1>;
-using RGB = Colorf32<3>;
-using LAB = Colorf32<3>;
-using CMYK = Colorf32<4>;
+using Gray = ColorTuple<1>;
+using RGB = ColorTuple<3>;
+using LAB = ColorTuple<3>;
+using CMYK = ColorTuple<4>;
 }
 
 class IColorCallback
