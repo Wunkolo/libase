@@ -24,7 +24,7 @@ include_directories( include )
 
 ### Targets
 add_library(
-	${PROJECT_NAME} STATIC
+	ase STATIC
 	source/ase/ase.cpp
 )
 
@@ -37,4 +37,23 @@ set(
 	${PROJECT_NAME}_INCLUDE_DIRS 
     ${PROJECT_SOURCE_DIR}/include
     CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE
+)
+
+
+### Tests
+enable_testing()
+
+add_executable(
+	Parse
+	test/Parse.cpp
+)
+target_link_libraries(
+	Parse
+	PRIVATE
+	ase
+)
+
+add_test(
+	NAME Parse
+	COMMAND Parse
 )
