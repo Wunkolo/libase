@@ -1,6 +1,7 @@
 #include <ase/ase.hpp>
 
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 
 #if defined(_MSC_VER)
@@ -328,7 +329,7 @@ inline float ReadType<float>(const void* & Pointer)
 
 inline void Read(const void* & Pointer, void* Dest, std::size_t Count)
 {
-	memcpy(Dest, Pointer, Count);
+	std::memcpy(Dest, Pointer, Count);
 	Pointer = static_cast<const std::uint8_t*>(Pointer) + Count;
 }
 
