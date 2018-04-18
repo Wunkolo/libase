@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -10,12 +11,18 @@ namespace ColorType
 template< std::size_t Channels >
 struct Colorf32
 {
-	float Channel[Channels];
+	std::float_t Channel[Channels];
 
-	float& operator[](std::size_t Index)
+	std::float_t& operator[](std::size_t Index)
 	{
 		return Channel[Index];
 	}
+
+	static_assert(
+		sizeof(std::float_t) == 4,
+		"sizeof(std::float_t) != 4\n"
+		"Ensure FLT_EVAL_METHOD is configured properly"
+	);
 };
 
 using Gray = Colorf32<1>;
