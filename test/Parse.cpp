@@ -14,6 +14,8 @@ class ColorPrinter : public ase::IColorCallback
 {
 public:
 	ColorPrinter()
+		:
+		Depth(0)
 	{
 	}
 	~ColorPrinter()
@@ -24,10 +26,12 @@ public:
 		const std::u16string& Name
 	) override
 	{
+		++Depth;
 	}
 
 	virtual void GroupEnd() override
 	{
+		--Depth;
 	}
 
 	virtual void ColorGray(
@@ -36,7 +40,8 @@ public:
 	) override
 	{
 		std::printf(
-			"Gray:\t[ %8.4f ]\n",
+			"%*sGray:\t[ %8.4f ]\n",
+			Depth * 4, "",
 			Color.f32[0]
 		);
 	}
@@ -47,7 +52,8 @@ public:
 	) override
 	{
 		std::printf(
-			"RGB:\t[ %8.4f %8.4f %8.4f ]\n",
+			"%*sRGB:\t[ %8.4f %8.4f %8.4f ]\n",
+			Depth * 4, "",
 			Color.f32[0],
 			Color.f32[1],
 			Color.f32[2]
@@ -60,7 +66,8 @@ public:
 	) override
 	{
 		std::printf(
-			"LAB:\t[ %8.4f %8.4f %8.4f ]\n",
+			"%*sLAB:\t[ %8.4f %8.4f %8.4f ]\n",
+			Depth * TabWidth, "",
 			Color.f32[0],
 			Color.f32[1],
 			Color.f32[2]
@@ -73,7 +80,8 @@ public:
 	) override
 	{
 		std::printf(
-			"CMYK:\t[ %8.4f %8.4f %8.4f %8.4f ]\n",
+			"%*sCMYK:\t[ %8.4f %8.4f %8.4f %8.4f ]\n",
+			Depth * TabWidth, "",
 			Color.f32[0],
 			Color.f32[1],
 			Color.f32[2],
@@ -81,6 +89,8 @@ public:
 		);
 	}
 private:
+	std::int32_t Depth;
+	static constexpr std::size_t TabWidth = 4;
 };
 
 
