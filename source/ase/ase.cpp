@@ -36,6 +36,19 @@ inline std::uint32_t SWAP32(std::uint32_t x)
 
 #endif
 
+constexpr std::uint32_t Magic32(
+	char Byte1,	char Byte2,
+	char Byte3,	char Byte4
+)
+{
+	return static_cast<std::uint32_t>(
+		static_cast<std::uint8_t>(Byte1) << 24 |
+		static_cast<std::uint8_t>(Byte2) << 16 |
+		static_cast<std::uint8_t>(Byte3) << 8  |
+		static_cast<std::uint8_t>(Byte4)
+	);
+}
+
 namespace ase
 {
 enum BlockClass : std::uint16_t
@@ -48,10 +61,10 @@ enum BlockClass : std::uint16_t
 enum ColorModel : std::uint32_t
 {
 	// Big Endian
-	CMYK = 'CMYK',
-	RGB = 'RGB ',
-	LAB = 'LAB ',
-	GRAY = 'Gray'
+	CMYK = Magic32( 'C', 'M', 'Y', 'K' ),
+	RGB  = Magic32( 'R', 'G', 'B', ' ' ),
+	LAB  = Magic32( 'L', 'A', 'B', ' ' ),
+	GRAY = Magic32( 'G', 'r', 'a', 'y' )
 };
 
 enum ColorCategory : std::uint16_t
@@ -118,7 +131,7 @@ bool LoadFromStream(
 
 	Magic = SWAP32(Magic);
 
-	if( Magic != 'ASEF' )
+	if( Magic != Magic32( 'A', 'S', 'E', 'F' ) )
 	{
 		return false;
 	}
@@ -348,7 +361,7 @@ bool LoadFromMemory(
 
 	const std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
 
-	if( Magic != 'ASEF' )
+	if( Magic != Magic32( 'A', 'S', 'E', 'F' ) )
 	{
 		return false;
 	}
