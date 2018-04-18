@@ -11,6 +11,7 @@ namespace ColorType
 template< std::size_t Channels >
 union ColorTuple
 {
+	constexpr static std::size_t ChannelCount = Channels;
 	std::float_t f32[Channels];
 	std::uint32_t u32[Channels];
 
