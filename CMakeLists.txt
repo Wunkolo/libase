@@ -20,7 +20,6 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 ### Optimizations
 if( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang|GNU" )
-	add_compile_options( -O2 )
 	add_compile_options( -Wall )
 	add_compile_options( -Wextra )
 elseif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" )
@@ -32,20 +31,11 @@ add_library(
 	ase STATIC
 	source/ase/ase.cpp
 )
-
-target_include_directories( ase PUBLIC include )
-
-set_target_properties(
-	${PROJECT_NAME}
-	PROPERTIES POSITION_INDEPENDENT_CODE ON
+target_include_directories(
+	ase
+	PUBLIC
+	include
 )
-
-set(
-	${PROJECT_NAME}_INCLUDE_DIRS 
-    ${PROJECT_SOURCE_DIR}/include
-    CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE
-)
-
 
 ### Tests
 if( MASTER_PROJECT )
