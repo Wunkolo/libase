@@ -299,12 +299,6 @@ inline float ReadType<float>(const void*& Pointer)
 	return *reinterpret_cast<float*>(&Temp);
 }
 
-inline void Read(const void*& Pointer, void* Dest, std::size_t Count)
-{
-	std::memcpy(Dest, Pointer, Count);
-	Pointer = static_cast<const std::uint8_t*>(Pointer) + Count;
-}
-
 bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 {
 	if( Buffer.data() == nullptr || Buffer.empty() )
