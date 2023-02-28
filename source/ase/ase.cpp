@@ -305,16 +305,14 @@ inline void Read(const void*& Pointer, void* Dest, std::size_t Count)
 	Pointer = static_cast<const std::uint8_t*>(Pointer) + Count;
 }
 
-bool LoadFromMemory(
-	IColorCallback& Callback, const void* Buffer, std::size_t Size
-)
+bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 {
-	if( Buffer == nullptr )
+	if( Buffer.data() == nullptr || Buffer.empty() )
 	{
 		return false;
 	}
 
-	const void* ReadPoint = Buffer;
+	const void* ReadPoint = reinterpret_cast<const void*>(Buffer.data());
 
 	const std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
 

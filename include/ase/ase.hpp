@@ -1,8 +1,8 @@
 #pragma once
 #include <cmath>
 #include <cstddef>
+#include <span>
 #include <string>
-#include <vector>
 
 namespace ase
 {
@@ -56,6 +56,6 @@ bool LoadFromFile(IColorCallback& Callback, const char* FileName);
 bool LoadFromStream(IColorCallback& Callback, std::istream& Stream);
 
 bool LoadFromMemory(
-	IColorCallback& Callback, const void* Buffer, std::size_t Size
+	IColorCallback& Callback, std::span<const std::byte> Buffer
 );
 } // namespace ase
