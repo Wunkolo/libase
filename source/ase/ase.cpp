@@ -18,34 +18,26 @@
 
 inline std::uint16_t SWAP16(std::uint16_t x)
 {
-	return (
-		((x & 0x00FF) << 8) |
-		((x & 0xFF00) >> 8)
-		);
+	return (((x & 0x00FF) << 8) | ((x & 0xFF00) >> 8));
 }
 
 inline std::uint32_t SWAP32(std::uint32_t x)
 {
-	return(
-		((x & 0x000000FF) << 24) |
-		((x & 0x0000FF00) << 8) |
-		((x & 0x00FF0000) >> 8) |
-		((x & 0xFF000000) >> 24)
-		);
+	return (
+		((x & 0x000000FF) << 24) | ((x & 0x0000FF00) << 8)
+		| ((x & 0x00FF0000) >> 8) | ((x & 0xFF000000) >> 24)
+	);
 }
 
 #endif
 
-constexpr std::uint32_t Magic32(
-	char Byte1,	char Byte2,
-	char Byte3,	char Byte4
-)
+constexpr std::uint32_t Magic32(char Byte1, char Byte2, char Byte3, char Byte4)
 {
 	return static_cast<std::uint32_t>(
-		static_cast<std::uint8_t>(Byte1) << 24 |
-		static_cast<std::uint8_t>(Byte2) << 16 |
-		static_cast<std::uint8_t>(Byte3) << 8  |
-		static_cast<std::uint8_t>(Byte4)
+		static_cast<std::uint8_t>(Byte1) << 24
+		| static_cast<std::uint8_t>(Byte2) << 16
+		| static_cast<std::uint8_t>(Byte3) << 8
+		| static_cast<std::uint8_t>(Byte4)
 	);
 }
 
@@ -55,22 +47,22 @@ enum BlockClass : std::uint16_t
 {
 	ColorEntry = 0x0001,
 	GroupBegin = 0xC001,
-	GroupEnd = 0xC002
+	GroupEnd   = 0xC002
 };
 
 enum ColorModel : std::uint32_t
 {
 	// Big Endian
-	CMYK = Magic32( 'C', 'M', 'Y', 'K' ),
-	RGB  = Magic32( 'R', 'G', 'B', ' ' ),
-	LAB  = Magic32( 'L', 'A', 'B', ' ' ),
-	GRAY = Magic32( 'G', 'r', 'a', 'y' )
+	CMYK = Magic32('C', 'M', 'Y', 'K'),
+	RGB  = Magic32('R', 'G', 'B', ' '),
+	LAB  = Magic32('L', 'A', 'B', ' '),
+	GRAY = Magic32('G', 'r', 'a', 'y')
 };
 
 enum ColorCategory : std::uint16_t
 {
 	Global = 0,
-	Spot = 1,
+	Spot   = 1,
 	Normal = 2
 };
 
@@ -82,7 +74,9 @@ void IColorCallback::GroupEnd()
 {
 }
 
-void IColorCallback::ColorGray(const std::u16string& Name, ColorType::Gray Lightness)
+void IColorCallback::ColorGray(
+	const std::u16string& Name, ColorType::Gray Lightness
+)
 {
 }
 
@@ -94,29 +88,22 @@ void IColorCallback::ColorLAB(const std::u16string& Name, ColorType::LAB Color)
 {
 }
 
-void IColorCallback::ColorCMYK(const std::u16string& Name, ColorType::CMYK Color)
+void IColorCallback::ColorCMYK(
+	const std::u16string& Name, ColorType::CMYK Color
+)
 {
 }
 
-bool LoadFromFile(
-	IColorCallback& Callback,
-	const char* FileName
-)
+bool LoadFromFile(IColorCallback& Callback, const char* FileName)
 {
 	std::ifstream SwatchFile;
 
-	SwatchFile.open(
-		FileName,
-		std::ios::binary
-	);
+	SwatchFile.open(FileName, std::ios::binary);
 
 	return LoadFromStream(Callback, SwatchFile);
 }
 
-bool LoadFromStream(
-	IColorCallback& Callback,
-	std::istream& Stream
-)
+bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 {
 	if( !Stream )
 	{
@@ -124,14 +111,11 @@ bool LoadFromStream(
 	}
 
 	std::uint32_t Magic;
-	Stream.read(
-		reinterpret_cast<char*>(&Magic),
-		sizeof(std::uint32_t)
-	);
+	Stream.read(reinterpret_cast<char*>(&Magic), sizeof(std::uint32_t));
 
 	Magic = SWAP32(Magic);
 
-	if( Magic != Magic32( 'A', 'S', 'E', 'F' ) )
+	if( Magic != Magic32('A', 'S', 'E', 'F') )
 	{
 		return false;
 	}
@@ -139,18 +123,9 @@ bool LoadFromStream(
 	std::uint16_t Version[2];
 	std::uint32_t BlockCount;
 
-	Stream.read(
-		reinterpret_cast<char*>(&Version[0]),
-		sizeof(std::uint16_t)
-	);
-	Stream.read(
-		reinterpret_cast<char*>(&Version[1]),
-		sizeof(std::uint16_t)
-	);
-	Stream.read(
-		reinterpret_cast<char*>(&BlockCount),
-		sizeof(std::uint32_t)
-	);
+	Stream.read(reinterpret_cast<char*>(&Version[0]), sizeof(std::uint16_t));
+	Stream.read(reinterpret_cast<char*>(&Version[1]), sizeof(std::uint16_t));
+	Stream.read(reinterpret_cast<char*>(&BlockCount), sizeof(std::uint32_t));
 
 	Version[0] = SWAP16(Version[0]);
 	Version[1] = SWAP16(Version[1]);
@@ -162,8 +137,7 @@ bool LoadFromStream(
 	while( BlockCount-- )
 	{
 		Stream.read(
-			reinterpret_cast<char*>(&CurBlockClass),
-			sizeof(std::uint16_t)
+			reinterpret_cast<char*>(&CurBlockClass), sizeof(std::uint16_t)
 		);
 		CurBlockClass = SWAP16(CurBlockClass);
 
@@ -173,17 +147,15 @@ bool LoadFromStream(
 		case BlockClass::GroupBegin:
 		{
 			Stream.read(
-				reinterpret_cast<char*>(&CurBlockSize),
-				sizeof(std::uint32_t)
+				reinterpret_cast<char*>(&CurBlockSize), sizeof(std::uint32_t)
 			);
 			CurBlockSize = SWAP32(CurBlockSize);
 
 			std::u16string EntryName;
-			std::uint16_t EntryNameLength;
+			std::uint16_t  EntryNameLength;
 
 			Stream.read(
-				reinterpret_cast<char*>(&EntryNameLength),
-				sizeof(std::uint16_t)
+				reinterpret_cast<char*>(&EntryNameLength), sizeof(std::uint16_t)
 			);
 			EntryNameLength = SWAP16(EntryNameLength);
 
@@ -191,8 +163,7 @@ bool LoadFromStream(
 			EntryName.resize(EntryNameLength);
 
 			Stream.read(
-				reinterpret_cast<char*>(&EntryName[0]),
-				EntryNameLength * 2
+				reinterpret_cast<char*>(&EntryName[0]), EntryNameLength * 2
 			);
 
 			// Endian swap each character
@@ -203,17 +174,14 @@ bool LoadFromStream(
 
 			if( CurBlockClass == BlockClass::GroupBegin )
 			{
-				Callback.GroupBegin(
-					EntryName
-				);
+				Callback.GroupBegin(EntryName);
 			}
 			else if( CurBlockClass == BlockClass::ColorEntry )
 			{
 				std::uint32_t ColorModel;
 
 				Stream.read(
-					reinterpret_cast<char*>(&ColorModel),
-					sizeof(std::uint32_t)
+					reinterpret_cast<char*>(&ColorModel), sizeof(std::uint32_t)
 				);
 				ColorModel = SWAP32(ColorModel);
 
@@ -230,10 +198,7 @@ bool LoadFromStream(
 					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
 					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
 					CurColor.u32[3] = SWAP32(CurColor.u32[3]);
-					Callback.ColorCMYK(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorCMYK(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::RGB:
@@ -246,10 +211,7 @@ bool LoadFromStream(
 					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
 					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
 					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
-					Callback.ColorRGB(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorRGB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::LAB:
@@ -262,10 +224,7 @@ bool LoadFromStream(
 					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
 					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
 					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
-					Callback.ColorLAB(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorLAB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::GRAY:
@@ -276,10 +235,7 @@ bool LoadFromStream(
 						sizeof(ColorType::Gray)
 					);
 					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
-					Callback.ColorGray(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
 				}
@@ -306,8 +262,8 @@ bool LoadFromStream(
 	return true;
 }
 
-template< typename T >
-inline T ReadType(const void* & Pointer)
+template<typename T>
+inline T ReadType(const void*& Pointer)
 {
 	const T* Temp = static_cast<const T*>(Pointer);
 	Pointer = static_cast<const T*>(Pointer) + static_cast<std::ptrdiff_t>(1);
@@ -315,41 +271,42 @@ inline T ReadType(const void* & Pointer)
 }
 
 template<>
-inline std::uint32_t ReadType<std::uint32_t>(const void* & Pointer)
+inline std::uint32_t ReadType<std::uint32_t>(const void*& Pointer)
 {
 	const std::uint32_t* Temp = static_cast<const std::uint32_t*>(Pointer);
-	Pointer = static_cast<const std::uint32_t*>(Pointer) + static_cast<std::ptrdiff_t>(1);
+	Pointer                   = static_cast<const std::uint32_t*>(Pointer)
+			+ static_cast<std::ptrdiff_t>(1);
 
 	return SWAP32(*Temp);
 }
 
 template<>
-inline std::uint16_t ReadType<std::uint16_t>(const void* & Pointer)
+inline std::uint16_t ReadType<std::uint16_t>(const void*& Pointer)
 {
 	const std::uint16_t* Temp = static_cast<const std::uint16_t*>(Pointer);
-	Pointer = static_cast<const std::uint16_t*>(Pointer) + static_cast<std::ptrdiff_t>(1);
+	Pointer                   = static_cast<const std::uint16_t*>(Pointer)
+			+ static_cast<std::ptrdiff_t>(1);
 
 	return SWAP16(*Temp);
 }
 
 template<>
-inline float ReadType<float>(const void* & Pointer)
+inline float ReadType<float>(const void*& Pointer)
 {
 	std::uint32_t Temp = SWAP32(*static_cast<const std::uint32_t*>(Pointer));
-	Pointer = static_cast<const float*>(Pointer) + static_cast<std::ptrdiff_t>(1);
+	Pointer
+		= static_cast<const float*>(Pointer) + static_cast<std::ptrdiff_t>(1);
 	return *reinterpret_cast<float*>(&Temp);
 }
 
-inline void Read(const void* & Pointer, void* Dest, std::size_t Count)
+inline void Read(const void*& Pointer, void* Dest, std::size_t Count)
 {
 	std::memcpy(Dest, Pointer, Count);
 	Pointer = static_cast<const std::uint8_t*>(Pointer) + Count;
 }
 
 bool LoadFromMemory(
-	IColorCallback& Callback,
-	const void* Buffer,
-	std::size_t Size
+	IColorCallback& Callback, const void* Buffer, std::size_t Size
 )
 {
 	if( Buffer == nullptr )
@@ -361,15 +318,15 @@ bool LoadFromMemory(
 
 	const std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
 
-	if( Magic != Magic32( 'A', 'S', 'E', 'F' ) )
+	if( Magic != Magic32('A', 'S', 'E', 'F') )
 	{
 		return false;
 	}
 
 	std::uint16_t Version[2];
 
-	Version[0] = ReadType<std::uint16_t>(ReadPoint);
-	Version[1] = ReadType<std::uint16_t>(ReadPoint);
+	Version[0]               = ReadType<std::uint16_t>(ReadPoint);
+	Version[1]               = ReadType<std::uint16_t>(ReadPoint);
 	std::uint32_t BlockCount = ReadType<std::uint32_t>(ReadPoint);
 
 	// Process stream
@@ -384,7 +341,8 @@ bool LoadFromMemory(
 		{
 			std::uint32_t CurBlockSize = ReadType<std::uint32_t>(ReadPoint);
 
-			const std::uint16_t EntryNameLength = ReadType<std::uint16_t>(ReadPoint);
+			const std::uint16_t EntryNameLength
+				= ReadType<std::uint16_t>(ReadPoint);
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
@@ -397,13 +355,12 @@ bool LoadFromMemory(
 
 			if( CurBlockClass == BlockClass::GroupBegin )
 			{
-				Callback.GroupBegin(
-					EntryName
-				);
+				Callback.GroupBegin(EntryName);
 			}
 			else if( CurBlockClass == BlockClass::ColorEntry )
 			{
-				const std::uint32_t ColorModel = ReadType<std::uint32_t>(ReadPoint);
+				const std::uint32_t ColorModel
+					= ReadType<std::uint32_t>(ReadPoint);
 
 				switch( ColorModel )
 				{
@@ -414,10 +371,7 @@ bool LoadFromMemory(
 					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[3] = ReadType<std::float_t>(ReadPoint);
-					Callback.ColorCMYK(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorCMYK(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::RGB:
@@ -426,10 +380,7 @@ bool LoadFromMemory(
 					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
-					Callback.ColorRGB(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorRGB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::LAB:
@@ -438,25 +389,20 @@ bool LoadFromMemory(
 					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
 					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
-					Callback.ColorLAB(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorLAB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::GRAY:
 				{
 					ColorType::Gray CurColor;
 					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
-					Callback.ColorGray(
-						EntryName,
-						CurColor
-					);
+					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
 				}
 
-				std::uint16_t ColorCategory = ReadType<std::uint16_t>(ReadPoint);
+				std::uint16_t ColorCategory
+					= ReadType<std::uint16_t>(ReadPoint);
 			}
 
 			break;
@@ -471,4 +417,4 @@ bool LoadFromMemory(
 
 	return true;
 }
-}
+} // namespace ase
