@@ -20,13 +20,13 @@ elseif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" )
 	add_compile_options( /W4 )
 endif()
 
-include_directories( include )
-
 ### Targets
 add_library(
 	ase STATIC
 	source/ase/ase.cpp
 )
+
+target_include_directories( ase PUBLIC include )
 
 set_target_properties(
 	${PROJECT_NAME}
