@@ -1,6 +1,13 @@
 cmake_minimum_required( VERSION 3.25 )
 project( ase )
 
+# Determine if we're built as a subproject (using add_subdirectory)
+# or if this is the master project.
+set(MASTER_PROJECT OFF)
+if( CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR )
+	set(MASTER_PROJECT ON)
+endif()
+
 ### Standard
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
@@ -41,25 +48,27 @@ set(
 
 
 ### Tests
-enable_testing()
+if( MASTER_PROJECT )
+	enable_testing()
 
-# Copy Sample swatch file to build folder
-file(
-	COPY test/SampleSwatch.ase
-	DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-)
+	# Copy Sample swatch file to build folder
+	file(
+		COPY test/SampleSwatch.ase
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+	)
 
-add_executable(
-	Parse
-	test/Parse.cpp
-)
-target_link_libraries(
-	Parse
-	PRIVATE
-	ase
-)
+	add_executable(
+		Parse
+		test/Parse.cpp
+	)
+	target_link_libraries(
+		Parse
+		PRIVATE
+		ase
+	)
 
-add_test(
-	NAME Parse
-	COMMAND Parse SampleSwatch.ase
-)
+	add_test(
+		NAME Parse
+		COMMAND Parse SampleSwatch.ase
+	)
+endif()
