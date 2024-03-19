@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <span>
 #include <string>
 
@@ -11,16 +12,16 @@ namespace ColorType
 template<std::size_t Channels>
 union ColorTuple
 {
-	constexpr static std::size_t ChannelCount = Channels;
-	std::float_t                 f32[Channels];
-	std::uint32_t                u32[Channels];
-
-	static_assert(
-		sizeof(std::float_t) == 4,
-		"sizeof(std::float_t) != 4\n"
-		"Ensure FLT_EVAL_METHOD is configured properly"
-	);
+	constexpr static std::size_t        ChannelCount = Channels;
+	std::array<std::float_t, Channels>  f32;
+	std::array<std::uint32_t, Channels> u32;
 };
+
+static_assert(
+	sizeof(std::float_t) == 4,
+	"sizeof(std::float_t) != 4\n"
+	"Ensure FLT_EVAL_METHOD is configured properly"
+);
 
 using Gray = ColorTuple<1>;
 using RGB  = ColorTuple<3>;
