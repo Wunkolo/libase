@@ -13,14 +13,7 @@
 class ColorPrinter : public ase::IColorCallback
 {
 public:
-	ColorPrinter() : Depth(0)
-	{
-	}
-	~ColorPrinter()
-	{
-	}
-
-	virtual void GroupBegin(const std::u16string& Name) override
+	void GroupBegin(const std::u16string& Name) override
 	{
 		++Depth;
 	}
@@ -64,7 +57,7 @@ public:
 	}
 
 private:
-	std::int32_t                 Depth;
+	std::int32_t                 Depth    = 0;
 	static constexpr std::size_t TabWidth = 4;
 };
 
