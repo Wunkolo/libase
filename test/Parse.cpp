@@ -25,19 +25,18 @@ public:
 		++Depth;
 	}
 
-	virtual void GroupEnd() override
+	void GroupEnd() override
 	{
 		--Depth;
 	}
 
-	virtual void ColorGray(
-		const std::u16string& Name, ase::ColorType::Gray Color
-	) override
+	void ColorGray(const std::u16string& Name, ase::ColorType::Gray Color)
+		override
 	{
 		std::printf("%*sGray:\t[ %8.4f ]\n", Depth * 4, "", Color.f32[0]);
 	}
 
-	virtual void
+	void
 		ColorRGB(const std::u16string& Name, ase::ColorType::RGB Color) override
 	{
 		std::printf(
@@ -46,7 +45,7 @@ public:
 		);
 	}
 
-	virtual void
+	void
 		ColorLAB(const std::u16string& Name, ase::ColorType::LAB Color) override
 	{
 		std::printf(
@@ -55,9 +54,8 @@ public:
 		);
 	}
 
-	virtual void ColorCMYK(
-		const std::u16string& Name, ase::ColorType::CMYK Color
-	) override
+	void ColorCMYK(const std::u16string& Name, ase::ColorType::CMYK Color)
+		override
 	{
 		std::printf(
 			"%*sCMYK:\t[ %8.4f %8.4f %8.4f %8.4f ]\n", Depth * TabWidth, "",
