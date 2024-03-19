@@ -1,35 +1,9 @@
 #include <ase/ase.hpp>
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-
-#if defined(_MSC_VER)
-
-#include <intrin.h>
-#define SWAP32(x) _byteswap_ulong(x)
-#define SWAP16(x) _byteswap_ushort(x)
-
-#elif defined(__GNUC__) || defined(__clang__)
-
-#define SWAP32(x) __builtin_bswap32(x)
-#define SWAP16(x) __builtin_bswap16(x)
-#else
-
-inline std::uint16_t SWAP16(std::uint16_t x)
-{
-	return (((x & 0x00FF) << 8) | ((x & 0xFF00) >> 8));
-}
-
-inline std::uint32_t SWAP32(std::uint32_t x)
-{
-	return (
-		((x & 0x000000FF) << 24) | ((x & 0x0000FF00) << 8)
-		| ((x & 0x00FF0000) >> 8) | ((x & 0xFF000000) >> 24)
-	);
-}
-
-#endif
 
 constexpr std::uint32_t Magic32(char Byte1, char Byte2, char Byte3, char Byte4)
 {
@@ -113,7 +87,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	std::uint32_t Magic;
 	Stream.read(reinterpret_cast<char*>(&Magic), sizeof(std::uint32_t));
 
-	Magic = SWAP32(Magic);
+	Magic = std::byteswap(Magic);
 
 	if( Magic != Magic32('A', 'S', 'E', 'F') )
 	{
@@ -127,9 +101,9 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	Stream.read(reinterpret_cast<char*>(&Version[1]), sizeof(std::uint16_t));
 	Stream.read(reinterpret_cast<char*>(&BlockCount), sizeof(std::uint32_t));
 
-	Version[0] = SWAP16(Version[0]);
-	Version[1] = SWAP16(Version[1]);
-	BlockCount = SWAP32(BlockCount);
+	Version[0] = std::byteswap(Version[0]);
+	Version[1] = std::byteswap(Version[1]);
+	BlockCount = std::byteswap(BlockCount);
 
 	std::uint16_t CurBlockClass;
 	std::uint32_t CurBlockSize;
@@ -139,7 +113,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 		Stream.read(
 			reinterpret_cast<char*>(&CurBlockClass), sizeof(std::uint16_t)
 		);
-		CurBlockClass = SWAP16(CurBlockClass);
+		CurBlockClass = std::byteswap(CurBlockClass);
 
 		switch( CurBlockClass )
 		{
@@ -149,7 +123,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 			Stream.read(
 				reinterpret_cast<char*>(&CurBlockSize), sizeof(std::uint32_t)
 			);
-			CurBlockSize = SWAP32(CurBlockSize);
+			CurBlockSize = std::byteswap(CurBlockSize);
 
 			std::u16string EntryName;
 			std::uint16_t  EntryNameLength;
@@ -157,7 +131,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 			Stream.read(
 				reinterpret_cast<char*>(&EntryNameLength), sizeof(std::uint16_t)
 			);
-			EntryNameLength = SWAP16(EntryNameLength);
+			EntryNameLength = std::byteswap(EntryNameLength);
 
 			EntryName.clear();
 			EntryName.resize(EntryNameLength);
@@ -169,7 +143,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 			// Endian swap each character
 			for( std::size_t i = 0; i < EntryNameLength; i++ )
 			{
-				EntryName[i] = SWAP16(EntryName[i]);
+				EntryName[i] = std::byteswap(EntryName[i]);
 			}
 
 			if( CurBlockClass == BlockClass::GroupBegin )
@@ -183,7 +157,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 				Stream.read(
 					reinterpret_cast<char*>(&ColorModel), sizeof(std::uint32_t)
 				);
-				ColorModel = SWAP32(ColorModel);
+				ColorModel = std::byteswap(ColorModel);
 
 				switch( ColorModel )
 				{
@@ -194,10 +168,10 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::CMYK)
 					);
-					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
-					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
-					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
-					CurColor.u32[3] = SWAP32(CurColor.u32[3]);
+					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
+					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
+					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
+					CurColor.u32[3] = std::byteswap(CurColor.u32[3]);
 					Callback.ColorCMYK(EntryName, CurColor);
 					break;
 				}
@@ -208,9 +182,9 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::RGB)
 					);
-					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
-					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
-					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
+					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
+					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
+					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
 					Callback.ColorRGB(EntryName, CurColor);
 					break;
 				}
@@ -221,9 +195,9 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::LAB)
 					);
-					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
-					CurColor.u32[1] = SWAP32(CurColor.u32[1]);
-					CurColor.u32[2] = SWAP32(CurColor.u32[2]);
+					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
+					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
+					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
 					Callback.ColorLAB(EntryName, CurColor);
 					break;
 				}
@@ -234,7 +208,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 						reinterpret_cast<char*>(&CurColor),
 						sizeof(ColorType::Gray)
 					);
-					CurColor.u32[0] = SWAP32(CurColor.u32[0]);
+					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
 					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
@@ -246,7 +220,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 					reinterpret_cast<char*>(&ColorCategory),
 					sizeof(std::uint16_t)
 				);
-				ColorCategory = SWAP16(ColorCategory);
+				ColorCategory = std::byteswap(ColorCategory);
 			}
 
 			break;
@@ -277,7 +251,7 @@ inline std::uint32_t ReadType<std::uint32_t>(const void*& Pointer)
 	Pointer                   = static_cast<const std::uint32_t*>(Pointer)
 			+ static_cast<std::ptrdiff_t>(1);
 
-	return SWAP32(*Temp);
+	return std::byteswap(*Temp);
 }
 
 template<>
@@ -287,13 +261,14 @@ inline std::uint16_t ReadType<std::uint16_t>(const void*& Pointer)
 	Pointer                   = static_cast<const std::uint16_t*>(Pointer)
 			+ static_cast<std::ptrdiff_t>(1);
 
-	return SWAP16(*Temp);
+	return std::byteswap(*Temp);
 }
 
 template<>
 inline float ReadType<float>(const void*& Pointer)
 {
-	std::uint32_t Temp = SWAP32(*static_cast<const std::uint32_t*>(Pointer));
+	std::uint32_t Temp
+		= std::byteswap(*static_cast<const std::uint32_t*>(Pointer));
 	Pointer
 		= static_cast<const float*>(Pointer) + static_cast<std::ptrdiff_t>(1);
 	return *reinterpret_cast<float*>(&Temp);
