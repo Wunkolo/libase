@@ -40,7 +40,7 @@ enum ColorCategory : std::uint16_t
 	Normal = 2
 };
 
-void IColorCallback::GroupBegin(const std::u16string& Name)
+void IColorCallback::GroupBegin(std::u16string_view Name)
 {
 }
 
@@ -49,22 +49,20 @@ void IColorCallback::GroupEnd()
 }
 
 void IColorCallback::ColorGray(
-	const std::u16string& Name, ColorType::Gray Lightness
+	std::u16string_view Name, ColorType::Gray Lightness
 )
 {
 }
 
-void IColorCallback::ColorRGB(const std::u16string& Name, ColorType::RGB Color)
+void IColorCallback::ColorRGB(std::u16string_view Name, ColorType::RGB Color)
 {
 }
 
-void IColorCallback::ColorLAB(const std::u16string& Name, ColorType::LAB Color)
+void IColorCallback::ColorLAB(std::u16string_view Name, ColorType::LAB Color)
 {
 }
 
-void IColorCallback::ColorCMYK(
-	const std::u16string& Name, ColorType::CMYK Color
-)
+void IColorCallback::ColorCMYK(std::u16string_view Name, ColorType::CMYK Color)
 {
 }
 

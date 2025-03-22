@@ -13,7 +13,7 @@
 class ColorPrinter : public ase::IColorCallback
 {
 public:
-	void GroupBegin(const std::u16string& Name) override
+	void GroupBegin(std::u16string_view Name) override
 	{
 		++Depth;
 	}
@@ -23,14 +23,13 @@ public:
 		--Depth;
 	}
 
-	void ColorGray(const std::u16string& Name, ase::ColorType::Gray Color)
-		override
+	void
+		ColorGray(std::u16string_view Name, ase::ColorType::Gray Color) override
 	{
 		std::printf("%*sGray:\t[ %8.4f ]\n", Depth * 4, "", Color.f32[0]);
 	}
 
-	void
-		ColorRGB(const std::u16string& Name, ase::ColorType::RGB Color) override
+	void ColorRGB(std::u16string_view Name, ase::ColorType::RGB Color) override
 	{
 		std::printf(
 			"%*sRGB:\t[ %8.4f %8.4f %8.4f ]\n", Depth * 4, "", Color.f32[0],
@@ -38,8 +37,7 @@ public:
 		);
 	}
 
-	void
-		ColorLAB(const std::u16string& Name, ase::ColorType::LAB Color) override
+	void ColorLAB(std::u16string_view Name, ase::ColorType::LAB Color) override
 	{
 		std::printf(
 			"%*sLAB:\t[ %8.4f %8.4f %8.4f ]\n", Depth * TabWidth, "",
@@ -47,8 +45,8 @@ public:
 		);
 	}
 
-	void ColorCMYK(const std::u16string& Name, ase::ColorType::CMYK Color)
-		override
+	void
+		ColorCMYK(std::u16string_view Name, ase::ColorType::CMYK Color) override
 	{
 		std::printf(
 			"%*sCMYK:\t[ %8.4f %8.4f %8.4f %8.4f ]\n", Depth * TabWidth, "",

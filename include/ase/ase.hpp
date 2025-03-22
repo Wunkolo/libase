@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <span>
 #include <string>
+#include <string_view>
 
 namespace ase
 {
@@ -34,21 +35,20 @@ class IColorCallback
 public:
 	virtual ~IColorCallback() = default;
 
-	virtual void GroupBegin(const std::u16string& Name);
+	virtual void GroupBegin(std::u16string_view Name);
 
 	virtual void GroupEnd();
 
-	virtual void
-		ColorGray(const std::u16string& Name, ColorType::Gray Lightness);
+	virtual void ColorGray(std::u16string_view Name, ColorType::Gray Lightness);
 	;
 
-	virtual void ColorRGB(const std::u16string& Name, ColorType::RGB Color);
+	virtual void ColorRGB(std::u16string_view Name, ColorType::RGB Color);
 	;
 
-	virtual void ColorLAB(const std::u16string& Name, ColorType::LAB Color);
+	virtual void ColorLAB(std::u16string_view Name, ColorType::LAB Color);
 	;
 
-	virtual void ColorCMYK(const std::u16string& Name, ColorType::CMYK Color);
+	virtual void ColorCMYK(std::u16string_view Name, ColorType::CMYK Color);
 	;
 };
 
