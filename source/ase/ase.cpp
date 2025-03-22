@@ -267,6 +267,7 @@ namespace
 // Read a type from a span of bytes, and offset the span
 // forward by the size of the type
 template<typename T>
+[[nodiscard]]
 inline T ReadType(std::span<const std::byte>& Bytes)
 {
 	// assert(Bytes.size_bytes() >= sizeof(T));
@@ -276,6 +277,7 @@ inline T ReadType(std::span<const std::byte>& Bytes)
 }
 
 template<>
+[[nodiscard]]
 inline std::uint16_t ReadType<std::uint16_t>(std::span<const std::byte>& Bytes)
 {
 	const std::uint16_t& Result
@@ -285,6 +287,7 @@ inline std::uint16_t ReadType<std::uint16_t>(std::span<const std::byte>& Bytes)
 }
 
 template<>
+[[nodiscard]]
 inline std::uint32_t ReadType<std::uint32_t>(std::span<const std::byte>& Bytes)
 {
 	// assert(Bytes.size_bytes() >= sizeof(T));
@@ -295,6 +298,7 @@ inline std::uint32_t ReadType<std::uint32_t>(std::span<const std::byte>& Bytes)
 }
 
 template<>
+[[nodiscard]]
 inline float ReadType<float>(std::span<const std::byte>& Bytes)
 {
 	static_assert(sizeof(float) == 4);
