@@ -1,12 +1,16 @@
 #include <ase/ase.hpp>
 
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 
+namespace
+{
+
 template<std::endian Endianness = std::endian::big, std::size_t N>
-inline constexpr std::uint32_t Magic32(const char (&TagString)[N])
+constexpr std::uint32_t Magic32(const char (&TagString)[N])
 {
 	static_assert(N == 5, "Tag must be 4 characters");
 	if constexpr( Endianness == std::endian::big )
@@ -24,6 +28,8 @@ inline constexpr std::uint32_t Magic32(const char (&TagString)[N])
 		);
 	}
 }
+
+} // namespace
 
 namespace ase
 {
@@ -116,7 +122,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	std::uint16_t CurBlockClass;
 	std::uint32_t CurBlockSize;
 	// Process stream
-	while( BlockCount-- )
+	while( (BlockCount--) != 0u )
 	{
 		Stream.read(
 			reinterpret_cast<char*>(&CurBlockClass), sizeof(std::uint16_t)
@@ -145,7 +151,8 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 			EntryName.resize(EntryNameLength);
 
 			Stream.read(
-				reinterpret_cast<char*>(&EntryName[0]), EntryNameLength * 2
+				reinterpret_cast<char*>(EntryName.data()),
+				static_cast<std::streamsize>(EntryNameLength * 2)
 			);
 
 			// Endian swap each character
@@ -220,6 +227,11 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
+				default:
+				{
+					// Unknown color model
+					return false;
+				}
 				}
 
 				std::uint16_t ColorCategory;
@@ -237,6 +249,11 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 		{
 			Callback.GroupEnd();
 			break;
+		}
+		default:
+		{
+			// Unknown block class
+			return false;
 		}
 		}
 	}
@@ -307,7 +324,7 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 	std::uint32_t BlockCount = ReadType<std::uint32_t>(Buffer);
 
 	// Process stream
-	while( BlockCount-- )
+	while( (BlockCount--) != 0u )
 	{
 		const std::uint16_t CurBlockClass = ReadType<std::uint16_t>(Buffer);
 
@@ -316,7 +333,8 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 		case BlockClass::ColorEntry:
 		case BlockClass::GroupBegin:
 		{
-			std::uint32_t CurBlockSize = ReadType<std::uint32_t>(Buffer);
+			const std::uint32_t CurBlockSize = ReadType<std::uint32_t>(Buffer);
+			(void)CurBlockSize;
 
 			const std::uint16_t EntryNameLength
 				= ReadType<std::uint16_t>(Buffer);
@@ -376,9 +394,16 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
+				default:
+				{
+					// Unknown Block Class
+					return false;
+				}
 				}
 
-				std::uint16_t ColorCategory = ReadType<std::uint16_t>(Buffer);
+				const std::uint16_t ColorCategory
+					= ReadType<std::uint16_t>(Buffer);
+				(void)ColorCategory;
 			}
 
 			break;
