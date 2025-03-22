@@ -5,14 +5,24 @@
 #include <cstring>
 #include <fstream>
 
-constexpr std::uint32_t Magic32(char Byte1, char Byte2, char Byte3, char Byte4)
+template<std::endian Endianness = std::endian::big, std::size_t N>
+inline constexpr std::uint32_t Magic32(const char (&TagString)[N])
 {
-	return static_cast<std::uint32_t>(
-		static_cast<std::uint8_t>(Byte1) << 24
-		| static_cast<std::uint8_t>(Byte2) << 16
-		| static_cast<std::uint8_t>(Byte3) << 8
-		| static_cast<std::uint8_t>(Byte4)
-	);
+	static_assert(N == 5, "Tag must be 4 characters");
+	if constexpr( Endianness == std::endian::big )
+	{
+		return (
+			(TagString[3] << 0) | (TagString[2] << 8) | (TagString[1] << 16)
+			| (TagString[0] << 24)
+		);
+	}
+	else
+	{
+		return (
+			(TagString[3] << 24) | (TagString[2] << 16) | (TagString[1] << 8)
+			| (TagString[0] << 0)
+		);
+	}
 }
 
 namespace ase
@@ -27,10 +37,10 @@ enum BlockClass : std::uint16_t
 enum ColorModel : std::uint32_t
 {
 	// Big Endian
-	CMYK = Magic32('C', 'M', 'Y', 'K'),
-	RGB  = Magic32('R', 'G', 'B', ' '),
-	LAB  = Magic32('L', 'A', 'B', ' '),
-	GRAY = Magic32('G', 'r', 'a', 'y')
+	CMYK = Magic32("CMYK"),
+	RGB  = Magic32("RGB "),
+	LAB  = Magic32("LAB "),
+	GRAY = Magic32("Gray")
 };
 
 enum ColorCategory : std::uint16_t
@@ -87,7 +97,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 
 	Magic = std::byteswap(Magic);
 
-	if( Magic != Magic32('A', 'S', 'E', 'F') )
+	if( Magic != Magic32("ASEF") )
 	{
 		return false;
 	}
@@ -285,7 +295,7 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 
 	const std::uint32_t Magic = ReadType<std::uint32_t>(Buffer);
 
-	if( Magic != Magic32('A', 'S', 'E', 'F') )
+	if( Magic != Magic32("ASEF") )
 	{
 		return false;
 	}
