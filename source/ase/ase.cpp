@@ -237,42 +237,41 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 namespace
 {
 
+// Read a type from a span of bytes, and offset the span
+// forward by the size of the type
 template<typename T>
-inline T ReadType(const void*& Pointer)
+inline T ReadType(std::span<const std::byte>& Bytes)
 {
-	const T* Temp = static_cast<const T*>(Pointer);
-	Pointer = static_cast<const T*>(Pointer) + static_cast<std::ptrdiff_t>(1);
-	return *Temp;
+	// assert(Bytes.size_bytes() >= sizeof(T));
+	const T& Result = *reinterpret_cast<const T*>(Bytes.data());
+	Bytes           = Bytes.subspan(sizeof(T));
+	return Result;
 }
 
 template<>
-inline std::uint32_t ReadType<std::uint32_t>(const void*& Pointer)
+inline std::uint16_t ReadType<std::uint16_t>(std::span<const std::byte>& Bytes)
 {
-	const std::uint32_t* Temp = static_cast<const std::uint32_t*>(Pointer);
-	Pointer                   = static_cast<const std::uint32_t*>(Pointer)
-			+ static_cast<std::ptrdiff_t>(1);
-
-	return std::byteswap(*Temp);
+	const std::uint16_t& Result
+		= *reinterpret_cast<const std::uint16_t*>(Bytes.data());
+	Bytes = Bytes.subspan(sizeof(std::uint16_t));
+	return std::byteswap(Result);
 }
 
 template<>
-inline std::uint16_t ReadType<std::uint16_t>(const void*& Pointer)
+inline std::uint32_t ReadType<std::uint32_t>(std::span<const std::byte>& Bytes)
 {
-	const std::uint16_t* Temp = static_cast<const std::uint16_t*>(Pointer);
-	Pointer                   = static_cast<const std::uint16_t*>(Pointer)
-			+ static_cast<std::ptrdiff_t>(1);
-
-	return std::byteswap(*Temp);
+	// assert(Bytes.size_bytes() >= sizeof(T));
+	const std::uint32_t& Result
+		= *reinterpret_cast<const std::uint32_t*>(Bytes.data());
+	Bytes = Bytes.subspan(sizeof(std::uint32_t));
+	return std::byteswap(Result);
 }
 
 template<>
-inline float ReadType<float>(const void*& Pointer)
+inline float ReadType<float>(std::span<const std::byte>& Bytes)
 {
-	std::uint32_t Temp
-		= std::byteswap(*static_cast<const std::uint32_t*>(Pointer));
-	Pointer
-		= static_cast<const float*>(Pointer) + static_cast<std::ptrdiff_t>(1);
-	return *reinterpret_cast<float*>(&Temp);
+	static_assert(sizeof(float) == 4);
+	return std::bit_cast<float>(ReadType<std::uint32_t>(Bytes));
 }
 
 } // namespace
@@ -284,9 +283,7 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 		return false;
 	}
 
-	const void* ReadPoint = reinterpret_cast<const void*>(Buffer.data());
-
-	const std::uint32_t Magic = ReadType<std::uint32_t>(ReadPoint);
+	const std::uint32_t Magic = ReadType<std::uint32_t>(Buffer);
 
 	if( Magic != Magic32('A', 'S', 'E', 'F') )
 	{
@@ -295,24 +292,24 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 
 	std::uint16_t Version[2];
 
-	Version[0]               = ReadType<std::uint16_t>(ReadPoint);
-	Version[1]               = ReadType<std::uint16_t>(ReadPoint);
-	std::uint32_t BlockCount = ReadType<std::uint32_t>(ReadPoint);
+	Version[0]               = ReadType<std::uint16_t>(Buffer);
+	Version[1]               = ReadType<std::uint16_t>(Buffer);
+	std::uint32_t BlockCount = ReadType<std::uint32_t>(Buffer);
 
 	// Process stream
 	while( BlockCount-- )
 	{
-		const std::uint16_t CurBlockClass = ReadType<std::uint16_t>(ReadPoint);
+		const std::uint16_t CurBlockClass = ReadType<std::uint16_t>(Buffer);
 
 		switch( CurBlockClass )
 		{
 		case BlockClass::ColorEntry:
 		case BlockClass::GroupBegin:
 		{
-			std::uint32_t CurBlockSize = ReadType<std::uint32_t>(ReadPoint);
+			std::uint32_t CurBlockSize = ReadType<std::uint32_t>(Buffer);
 
 			const std::uint16_t EntryNameLength
-				= ReadType<std::uint16_t>(ReadPoint);
+				= ReadType<std::uint16_t>(Buffer);
 
 			std::u16string EntryName;
 			EntryName.resize(EntryNameLength);
@@ -320,7 +317,7 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 			// Endian swap each character
 			for( std::size_t i = 0; i < EntryNameLength; i++ )
 			{
-				EntryName[i] = ReadType<std::uint16_t>(ReadPoint);
+				EntryName[i] = ReadType<std::uint16_t>(Buffer);
 			}
 
 			if( CurBlockClass == BlockClass::GroupBegin )
@@ -330,49 +327,48 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 			else if( CurBlockClass == BlockClass::ColorEntry )
 			{
 				const std::uint32_t ColorModel
-					= ReadType<std::uint32_t>(ReadPoint);
+					= ReadType<std::uint32_t>(Buffer);
 
 				switch( ColorModel )
 				{
 				case ColorModel::CMYK:
 				{
 					ColorType::CMYK CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[3] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[3] = ReadType<std::float_t>(Buffer);
 					Callback.ColorCMYK(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::RGB:
 				{
 					ColorType::RGB CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
 					Callback.ColorRGB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::LAB:
 				{
 					ColorType::LAB CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[1] = ReadType<std::float_t>(ReadPoint);
-					CurColor.f32[2] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
+					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
 					Callback.ColorLAB(EntryName, CurColor);
 					break;
 				}
 				case ColorModel::GRAY:
 				{
 					ColorType::Gray CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(ReadPoint);
+					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
 					Callback.ColorGray(EntryName, CurColor);
 					break;
 				}
 				}
 
-				std::uint16_t ColorCategory
-					= ReadType<std::uint16_t>(ReadPoint);
+				std::uint16_t ColorCategory = ReadType<std::uint16_t>(Buffer);
 			}
 
 			break;
