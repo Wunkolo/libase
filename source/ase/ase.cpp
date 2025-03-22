@@ -234,6 +234,9 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	return true;
 }
 
+namespace
+{
+
 template<typename T>
 inline T ReadType(const void*& Pointer)
 {
@@ -271,6 +274,8 @@ inline float ReadType<float>(const void*& Pointer)
 		= static_cast<const float*>(Pointer) + static_cast<std::ptrdiff_t>(1);
 	return *reinterpret_cast<float*>(&Temp);
 }
+
+} // namespace
 
 bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 {
