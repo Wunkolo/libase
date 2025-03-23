@@ -235,11 +235,13 @@ bool ReadBlock(
 }
 } // namespace
 
-bool LoadFromFile(IColorCallback& Callback, const char* FileName)
+bool LoadFromFile(
+	IColorCallback& Callback, const std::filesystem::path& FilePath
+)
 {
 	std::ifstream SwatchFile;
 
-	SwatchFile.open(FileName, std::ios::binary);
+	SwatchFile.open(FilePath, std::ios::binary);
 
 	return LoadFromStream(Callback, SwatchFile);
 }

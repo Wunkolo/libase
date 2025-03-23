@@ -2,8 +2,8 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <span>
-#include <string>
 #include <string_view>
 
 namespace ase
@@ -57,7 +57,9 @@ public:
 	;
 };
 
-bool LoadFromFile(IColorCallback& Callback, const char* FileName);
+bool LoadFromFile(
+	IColorCallback& Callback, const std::filesystem::path& FilePath
+);
 
 bool LoadFromStream(IColorCallback& Callback, std::istream& Stream);
 
