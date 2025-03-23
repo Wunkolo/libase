@@ -12,7 +12,7 @@ namespace
 {
 
 template<std::endian Endianness = std::endian::big, std::size_t N>
-constexpr std::uint32_t Magic32(const char (&TagString)[N])
+consteval std::uint32_t Magic32(const char (&TagString)[N])
 {
 	static_assert(N == 5, "Tag must be 4 characters");
 	if constexpr( Endianness == std::endian::big )
