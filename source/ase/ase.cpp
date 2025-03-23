@@ -1,10 +1,12 @@
 #include <ase/ase.hpp>
 
 #include <bit>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <vector>
 
 namespace
 {
@@ -27,6 +29,47 @@ constexpr std::uint32_t Magic32(const char (&TagString)[N])
 			| (TagString[0] << 0)
 		);
 	}
+}
+
+// Read a type from a span of bytes, and offset the span
+// forward by the size of the type. Note that this will modify the incoming span
+// to after the read type, allowing a chain of calls to move the span forward
+// continuously. Will assert if the are not enough bytes to read the type
+template<typename T>
+[[nodiscard]]
+inline T ReadSwap(std::span<const std::byte>&)
+{
+	static_assert("New Big-Endian specialization needed");
+}
+
+template<>
+[[nodiscard]]
+inline std::uint16_t ReadSwap<std::uint16_t>(std::span<const std::byte>& Bytes)
+{
+	assert(Bytes.size_bytes() >= sizeof(std::uint16_t));
+	const std::uint16_t& Result
+		= *reinterpret_cast<const std::uint16_t*>(Bytes.data());
+	Bytes = Bytes.subspan(sizeof(std::uint16_t));
+	return std::byteswap(Result);
+}
+
+template<>
+[[nodiscard]]
+inline std::uint32_t ReadSwap<std::uint32_t>(std::span<const std::byte>& Bytes)
+{
+	assert(Bytes.size_bytes() >= sizeof(std::uint32_t));
+	const std::uint32_t& Result
+		= *reinterpret_cast<const std::uint32_t*>(Bytes.data());
+	Bytes = Bytes.subspan(sizeof(std::uint32_t));
+	return std::byteswap(Result);
+}
+
+template<>
+[[nodiscard]]
+inline float ReadSwap<float>(std::span<const std::byte>& Bytes)
+{
+	static_assert(sizeof(float) == 4);
+	return std::bit_cast<float>(ReadSwap<std::uint32_t>(Bytes));
 }
 
 } // namespace
@@ -56,6 +99,19 @@ enum ColorCategory : std::uint16_t
 	Normal = 2
 };
 
+struct Header
+{
+	std::uint32_t Identifier;
+	std::uint16_t VersionMajor;
+	std::uint16_t VersionMinor;
+	std::uint32_t BlockCount;
+};
+static_assert(sizeof(Header) == 12);
+static_assert(offsetof(Header, Identifier) == 0);
+static_assert(offsetof(Header, VersionMajor) == 4);
+static_assert(offsetof(Header, VersionMinor) == 6);
+static_assert(offsetof(Header, BlockCount) == 8);
+
 void IColorCallback::GroupBegin(std::u16string_view Name)
 {
 }
@@ -82,6 +138,97 @@ void IColorCallback::ColorCMYK(std::u16string_view Name, ColorType::CMYK Color)
 {
 }
 
+namespace
+{
+
+Header ReadHeader(std::span<const std::byte> Buffer)
+{
+	Header Result;
+
+	Result.Identifier   = ReadSwap<std::uint32_t>(Buffer);
+	Result.VersionMajor = ReadSwap<std::uint16_t>(Buffer);
+	Result.VersionMinor = ReadSwap<std::uint16_t>(Buffer);
+	Result.BlockCount   = ReadSwap<std::uint32_t>(Buffer);
+
+	return Result;
+}
+
+bool ReadBlock(
+	IColorCallback& Callback, BlockClass CurBlockClass,
+	std::span<const std::byte> Buffer
+)
+{
+	const std::uint16_t EntryNameLength = ReadSwap<std::uint16_t>(Buffer);
+
+	std::u16string EntryName;
+	EntryName.resize(EntryNameLength);
+
+	// Endian swap each character
+	for( std::size_t i = 0; i < EntryNameLength; i++ )
+	{
+		EntryName[i] = ReadSwap<std::uint16_t>(Buffer);
+	}
+
+	if( CurBlockClass == BlockClass::GroupBegin )
+	{
+		Callback.GroupBegin(EntryName);
+	}
+	else if( CurBlockClass == BlockClass::ColorEntry )
+	{
+		const std::uint32_t ColorModel = ReadSwap<std::uint32_t>(Buffer);
+
+		switch( ColorModel )
+		{
+		case ColorModel::CMYK:
+		{
+			ColorType::CMYK CurColor;
+			CurColor.f32[0] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[1] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[2] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[3] = ReadSwap<std::float_t>(Buffer);
+			Callback.ColorCMYK(EntryName, CurColor);
+			break;
+		}
+		case ColorModel::RGB:
+		{
+			ColorType::RGB CurColor;
+			CurColor.f32[0] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[1] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[2] = ReadSwap<std::float_t>(Buffer);
+			Callback.ColorRGB(EntryName, CurColor);
+			break;
+		}
+		case ColorModel::LAB:
+		{
+			ColorType::LAB CurColor;
+			CurColor.f32[0] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[1] = ReadSwap<std::float_t>(Buffer);
+			CurColor.f32[2] = ReadSwap<std::float_t>(Buffer);
+			Callback.ColorLAB(EntryName, CurColor);
+			break;
+		}
+		case ColorModel::GRAY:
+		{
+			ColorType::Gray CurColor;
+			CurColor.f32[0] = ReadSwap<std::float_t>(Buffer);
+			Callback.ColorGray(EntryName, CurColor);
+			break;
+		}
+		default:
+		{
+			// Unknown Block Class
+			return false;
+		}
+		}
+
+		const std::uint16_t ColorCategory = ReadSwap<std::uint16_t>(Buffer);
+		(void)ColorCategory;
+	}
+
+	return true;
+}
+} // namespace
+
 bool LoadFromFile(IColorCallback& Callback, const char* FileName)
 {
 	std::ifstream SwatchFile;
@@ -98,150 +245,62 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 		return false;
 	}
 
-	std::uint32_t Magic;
-	Stream.read(reinterpret_cast<char*>(&Magic), sizeof(std::uint32_t));
+	// Re-used buffer for data reads from the stream
+	// Mostly used to allow for a small pool of "std::span" functions
+	// to exist without having to handle streams and spans differently
+	std::vector<std::byte> CurBufferData(sizeof(Header), std::byte{});
 
-	Magic = std::byteswap(Magic);
-
-	if( Magic != Magic32("ASEF") )
+	if( Stream.read(
+			reinterpret_cast<char*>(CurBufferData.data()), sizeof(Header)
+		);
+		!Stream )
 	{
 		return false;
 	}
 
-	std::uint16_t Version[2];
-	std::uint32_t BlockCount;
+	const Header CurHeader = ReadHeader(CurBufferData);
 
-	Stream.read(reinterpret_cast<char*>(&Version[0]), sizeof(std::uint16_t));
-	Stream.read(reinterpret_cast<char*>(&Version[1]), sizeof(std::uint16_t));
-	Stream.read(reinterpret_cast<char*>(&BlockCount), sizeof(std::uint32_t));
+	if( CurHeader.Identifier != Magic32("ASEF") )
+	{
+		return false;
+	}
 
-	Version[0] = std::byteswap(Version[0]);
-	Version[1] = std::byteswap(Version[1]);
-	BlockCount = std::byteswap(BlockCount);
-
-	std::uint16_t CurBlockClass;
-	std::uint32_t CurBlockSize;
 	// Process stream
+	auto BlockCount = CurHeader.BlockCount;
 	while( (BlockCount--) != 0u )
 	{
-		Stream.read(
-			reinterpret_cast<char*>(&CurBlockClass), sizeof(std::uint16_t)
-		);
-		CurBlockClass = std::byteswap(CurBlockClass);
+		BlockClass CurBlockClass;
+		{
+			std::uint16_t CurBlockClassRaw;
+			if( Stream.read(
+					reinterpret_cast<char*>(&CurBlockClassRaw),
+					sizeof(std::uint16_t)
+				);
+				!Stream )
+			{
+				return false;
+			}
+			CurBlockClassRaw = std::byteswap(CurBlockClassRaw);
+			CurBlockClass    = static_cast<BlockClass>(CurBlockClassRaw);
+		}
 
 		switch( CurBlockClass )
 		{
 		case BlockClass::ColorEntry:
 		case BlockClass::GroupBegin:
 		{
+			std::uint32_t CurBlockSize;
 			Stream.read(
 				reinterpret_cast<char*>(&CurBlockSize), sizeof(std::uint32_t)
 			);
 			CurBlockSize = std::byteswap(CurBlockSize);
 
-			std::u16string EntryName;
-			std::uint16_t  EntryNameLength;
-
+			CurBufferData.resize(CurBlockSize, {});
 			Stream.read(
-				reinterpret_cast<char*>(&EntryNameLength), sizeof(std::uint16_t)
-			);
-			EntryNameLength = std::byteswap(EntryNameLength);
-
-			EntryName.clear();
-			EntryName.resize(EntryNameLength);
-
-			Stream.read(
-				reinterpret_cast<char*>(EntryName.data()),
-				static_cast<std::streamsize>(EntryNameLength * 2)
+				reinterpret_cast<char*>(CurBufferData.data()), CurBlockSize
 			);
 
-			// Endian swap each character
-			for( std::size_t i = 0; i < EntryNameLength; i++ )
-			{
-				EntryName[i] = std::byteswap(EntryName[i]);
-			}
-
-			if( CurBlockClass == BlockClass::GroupBegin )
-			{
-				Callback.GroupBegin(EntryName);
-			}
-			else if( CurBlockClass == BlockClass::ColorEntry )
-			{
-				std::uint32_t ColorModel;
-
-				Stream.read(
-					reinterpret_cast<char*>(&ColorModel), sizeof(std::uint32_t)
-				);
-				ColorModel = std::byteswap(ColorModel);
-
-				switch( ColorModel )
-				{
-				case ColorModel::CMYK:
-				{
-					ColorType::CMYK CurColor;
-					Stream.read(
-						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::CMYK)
-					);
-					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
-					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
-					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
-					CurColor.u32[3] = std::byteswap(CurColor.u32[3]);
-					Callback.ColorCMYK(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::RGB:
-				{
-					ColorType::RGB CurColor;
-					Stream.read(
-						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::RGB)
-					);
-					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
-					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
-					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
-					Callback.ColorRGB(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::LAB:
-				{
-					ColorType::LAB CurColor;
-					Stream.read(
-						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::LAB)
-					);
-					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
-					CurColor.u32[1] = std::byteswap(CurColor.u32[1]);
-					CurColor.u32[2] = std::byteswap(CurColor.u32[2]);
-					Callback.ColorLAB(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::GRAY:
-				{
-					ColorType::Gray CurColor;
-					Stream.read(
-						reinterpret_cast<char*>(&CurColor),
-						sizeof(ColorType::Gray)
-					);
-					CurColor.u32[0] = std::byteswap(CurColor.u32[0]);
-					Callback.ColorGray(EntryName, CurColor);
-					break;
-				}
-				default:
-				{
-					// Unknown color model
-					return false;
-				}
-				}
-
-				std::uint16_t ColorCategory;
-
-				Stream.read(
-					reinterpret_cast<char*>(&ColorCategory),
-					sizeof(std::uint16_t)
-				);
-				ColorCategory = std::byteswap(ColorCategory);
-			}
+			ReadBlock(Callback, CurBlockClass, CurBufferData);
 
 			break;
 		}
@@ -261,52 +320,6 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	return true;
 }
 
-namespace
-{
-
-// Read a type from a span of bytes, and offset the span
-// forward by the size of the type
-template<typename T>
-[[nodiscard]]
-inline T ReadType(std::span<const std::byte>& Bytes)
-{
-	// assert(Bytes.size_bytes() >= sizeof(T));
-	const T& Result = *reinterpret_cast<const T*>(Bytes.data());
-	Bytes           = Bytes.subspan(sizeof(T));
-	return Result;
-}
-
-template<>
-[[nodiscard]]
-inline std::uint16_t ReadType<std::uint16_t>(std::span<const std::byte>& Bytes)
-{
-	const std::uint16_t& Result
-		= *reinterpret_cast<const std::uint16_t*>(Bytes.data());
-	Bytes = Bytes.subspan(sizeof(std::uint16_t));
-	return std::byteswap(Result);
-}
-
-template<>
-[[nodiscard]]
-inline std::uint32_t ReadType<std::uint32_t>(std::span<const std::byte>& Bytes)
-{
-	// assert(Bytes.size_bytes() >= sizeof(T));
-	const std::uint32_t& Result
-		= *reinterpret_cast<const std::uint32_t*>(Bytes.data());
-	Bytes = Bytes.subspan(sizeof(std::uint32_t));
-	return std::byteswap(Result);
-}
-
-template<>
-[[nodiscard]]
-inline float ReadType<float>(std::span<const std::byte>& Bytes)
-{
-	static_assert(sizeof(float) == 4);
-	return std::bit_cast<float>(ReadType<std::uint32_t>(Bytes));
-}
-
-} // namespace
-
 bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 {
 	if( Buffer.data() == nullptr || Buffer.empty() )
@@ -314,101 +327,33 @@ bool LoadFromMemory(IColorCallback& Callback, std::span<const std::byte> Buffer)
 		return false;
 	}
 
-	const std::uint32_t Magic = ReadType<std::uint32_t>(Buffer);
+	const Header CurHeader = ReadHeader(Buffer);
 
-	if( Magic != Magic32("ASEF") )
+	Buffer = Buffer.subspan(sizeof(Header));
+
+	if( CurHeader.Identifier != Magic32("ASEF") )
 	{
 		return false;
 	}
 
-	std::uint16_t Version[2];
-
-	Version[0]               = ReadType<std::uint16_t>(Buffer);
-	Version[1]               = ReadType<std::uint16_t>(Buffer);
-	std::uint32_t BlockCount = ReadType<std::uint32_t>(Buffer);
-
 	// Process stream
+	std::uint32_t BlockCount = CurHeader.BlockCount;
 	while( (BlockCount--) != 0u )
 	{
-		const std::uint16_t CurBlockClass = ReadType<std::uint16_t>(Buffer);
+		const BlockClass CurBlockClass
+			= static_cast<BlockClass>(ReadSwap<std::uint16_t>(Buffer));
 
 		switch( CurBlockClass )
 		{
 		case BlockClass::ColorEntry:
 		case BlockClass::GroupBegin:
 		{
-			const std::uint32_t CurBlockSize = ReadType<std::uint32_t>(Buffer);
+			const std::uint32_t CurBlockSize = ReadSwap<std::uint32_t>(Buffer);
 			(void)CurBlockSize;
 
-			const std::uint16_t EntryNameLength
-				= ReadType<std::uint16_t>(Buffer);
+			ReadBlock(Callback, CurBlockClass, Buffer);
 
-			std::u16string EntryName;
-			EntryName.resize(EntryNameLength);
-
-			// Endian swap each character
-			for( std::size_t i = 0; i < EntryNameLength; i++ )
-			{
-				EntryName[i] = ReadType<std::uint16_t>(Buffer);
-			}
-
-			if( CurBlockClass == BlockClass::GroupBegin )
-			{
-				Callback.GroupBegin(EntryName);
-			}
-			else if( CurBlockClass == BlockClass::ColorEntry )
-			{
-				const std::uint32_t ColorModel
-					= ReadType<std::uint32_t>(Buffer);
-
-				switch( ColorModel )
-				{
-				case ColorModel::CMYK:
-				{
-					ColorType::CMYK CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[3] = ReadType<std::float_t>(Buffer);
-					Callback.ColorCMYK(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::RGB:
-				{
-					ColorType::RGB CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
-					Callback.ColorRGB(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::LAB:
-				{
-					ColorType::LAB CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[1] = ReadType<std::float_t>(Buffer);
-					CurColor.f32[2] = ReadType<std::float_t>(Buffer);
-					Callback.ColorLAB(EntryName, CurColor);
-					break;
-				}
-				case ColorModel::GRAY:
-				{
-					ColorType::Gray CurColor;
-					CurColor.f32[0] = ReadType<std::float_t>(Buffer);
-					Callback.ColorGray(EntryName, CurColor);
-					break;
-				}
-				default:
-				{
-					// Unknown Block Class
-					return false;
-				}
-				}
-
-				const std::uint16_t ColorCategory
-					= ReadType<std::uint16_t>(Buffer);
-				(void)ColorCategory;
-			}
+			Buffer = Buffer.subspan(CurBlockSize);
 
 			break;
 		}

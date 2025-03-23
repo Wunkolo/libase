@@ -8,6 +8,7 @@
 
 namespace ase
 {
+
 namespace ColorType
 {
 template<std::size_t Channels>
