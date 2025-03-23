@@ -121,20 +121,26 @@ void IColorCallback::GroupEnd()
 }
 
 void IColorCallback::ColorGray(
-	std::u16string_view Name, ColorType::Gray Lightness
+	std::u16string_view Name, const ColorType::Gray& Lightness
 )
 {
 }
 
-void IColorCallback::ColorRGB(std::u16string_view Name, ColorType::RGB Color)
+void IColorCallback::ColorRGB(
+	std::u16string_view Name, const ColorType::RGB& Color
+)
 {
 }
 
-void IColorCallback::ColorLAB(std::u16string_view Name, ColorType::LAB Color)
+void IColorCallback::ColorLAB(
+	std::u16string_view Name, const ColorType::LAB& Color
+)
 {
 }
 
-void IColorCallback::ColorCMYK(std::u16string_view Name, ColorType::CMYK Color)
+void IColorCallback::ColorCMYK(
+	std::u16string_view Name, const ColorType::CMYK& Color
+)
 {
 }
 
@@ -161,7 +167,7 @@ bool ReadBlock(
 	const std::uint16_t EntryNameLength = ReadSwap<std::uint16_t>(Buffer);
 
 	std::u16string EntryName;
-	EntryName.resize(EntryNameLength);
+	EntryName.resize(EntryNameLength, L'\0');
 
 	// Endian swap each character
 	for( std::size_t i = 0; i < EntryNameLength; i++ )
@@ -266,7 +272,7 @@ bool LoadFromStream(IColorCallback& Callback, std::istream& Stream)
 	}
 
 	// Process stream
-	auto BlockCount = CurHeader.BlockCount;
+	std::uint32_t BlockCount = CurHeader.BlockCount;
 	while( (BlockCount--) != 0u )
 	{
 		BlockClass CurBlockClass;

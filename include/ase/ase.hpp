@@ -40,16 +40,20 @@ public:
 
 	virtual void GroupEnd();
 
-	virtual void ColorGray(std::u16string_view Name, ColorType::Gray Lightness);
+	virtual void
+		ColorGray(std::u16string_view Name, const ColorType::Gray& Lightness);
 	;
 
-	virtual void ColorRGB(std::u16string_view Name, ColorType::RGB Color);
+	virtual void
+		ColorRGB(std::u16string_view Name, const ColorType::RGB& Color);
 	;
 
-	virtual void ColorLAB(std::u16string_view Name, ColorType::LAB Color);
+	virtual void
+		ColorLAB(std::u16string_view Name, const ColorType::LAB& Color);
 	;
 
-	virtual void ColorCMYK(std::u16string_view Name, ColorType::CMYK Color);
+	virtual void
+		ColorCMYK(std::u16string_view Name, const ColorType::CMYK& Color);
 	;
 };
 

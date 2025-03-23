@@ -42,8 +42,8 @@ public:
 		--Depth;
 	}
 
-	void
-		ColorGray(std::u16string_view Name, ase::ColorType::Gray Color) override
+	void ColorGray(std::u16string_view Name, const ase::ColorType::Gray& Color)
+		override
 	{
 		std::wprintf(
 			L"%*ls \"%ls\" Gray:\t[ %8.4f ]\n", Depth * 4, L"",
@@ -51,7 +51,8 @@ public:
 		);
 	}
 
-	void ColorRGB(std::u16string_view Name, ase::ColorType::RGB Color) override
+	void ColorRGB(std::u16string_view Name, const ase::ColorType::RGB& Color)
+		override
 	{
 		std::wprintf(
 			L"%*ls \"%ls\" RGB:\t[ %8.4f %8.4f %8.4f ]\n", Depth * 4, L"",
@@ -59,7 +60,8 @@ public:
 		);
 	}
 
-	void ColorLAB(std::u16string_view Name, ase::ColorType::LAB Color) override
+	void ColorLAB(std::u16string_view Name, const ase::ColorType::LAB& Color)
+		override
 	{
 		std::wprintf(
 			L"%*ls \"%ls\" LAB:\t[ %8.4f %8.4f %8.4f ]\n", Depth * TabWidth,
@@ -68,8 +70,8 @@ public:
 		);
 	}
 
-	void
-		ColorCMYK(std::u16string_view Name, ase::ColorType::CMYK Color) override
+	void ColorCMYK(std::u16string_view Name, const ase::ColorType::CMYK& Color)
+		override
 	{
 		std::wprintf(
 			L"%*ls \"%ls\" CMYK:\t[ %8.4f %8.4f %8.4f %8.4f ]\n",
