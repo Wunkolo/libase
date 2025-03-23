@@ -3,11 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <codecvt>
-#include <iostream>
-#include <locale>
-#include <string>
-
 #include <ase/ase.hpp>
 
 class ColorPrinter : public ase::IColorCallback
